@@ -22,7 +22,11 @@ dependencies = [
     "llama-index-vector-stores-opensearch (>=1.2.0,<2.0.0)",
     "llama-index-node-parser-docling (>=0.4.2,<0.5.0)",
     "llama-index-core (>=0.14.23,<0.15.0)",
-    "tenacity (>=9.1.4,<10.0.0)"
+    "tenacity (>=9.1.4,<10.0.0)",
+    "google-auth (>=2.56.3,<3.0.0)",
+    "google-auth-oauthlib (>=1.4.0,<2.0.0)",
+    "google-auth-httplib2 (>=0.4.1,<0.5.0)",
+    "google-api-python-client (>=2.198.0,<3.0.0)"
 ]
 
 [tool.poetry]
@@ -31,3 +35,8 @@ packages = [{include = "vectorize_for_ai", from = "src"}]
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)"
+]
