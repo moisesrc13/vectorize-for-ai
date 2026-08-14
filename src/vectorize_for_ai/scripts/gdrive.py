@@ -57,7 +57,8 @@ def main():
         #drive_id=gdrive_settings.drive_shared_id,
         folder_id=gdrive_settings.drive_folder_id,
         since_date=since,
-        date_field="modifiedTime",
+        #date_field="modifiedTime",
+        date_field="createdTime",
         handler=print_handler,  # <-- Replace with your custom handler
         download=gdrive_settings.drive_local_download_dir
     ):
