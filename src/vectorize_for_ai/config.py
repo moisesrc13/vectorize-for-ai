@@ -23,19 +23,9 @@ class Settings(BaseSettings):
         default=datetime.now().strftime("%Y-%m-%d"),
     )
 
-    # IBM COS Configuration
-    cos_endpoint: str = Field(..., description="IBM COS endpoint URL")
-    cos_api_key: str = Field(..., description="IBM COS API key")
-    cos_instance_id: str = Field(..., description="IBM COS instance ID")
-    cos_bucket_name: str = Field(..., description="IBM COS bucket name")
-    cos_auth_endpoint: str = Field(
-        default="https://iam.cloud.ibm.com/identity/token",
-        description="IBM COS authentication endpoint",
-    )
-
     # Database Configuration
-    database_type: Literal["milvus", "opensearch"] = Field(
-        default="milvus",
+    database_type: Literal["opensearch"] = Field(
+        default="opensearch",
         description="Database type to use for ingestion (milvus or opensearch)",
     )
 
