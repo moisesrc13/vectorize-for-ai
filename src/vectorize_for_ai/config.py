@@ -140,13 +140,12 @@ class Settings(BaseSettings):
 
 
 class GDriveSettings(BaseSettings):
-    # Drive
     drive_credentials_path: str = Field(default="credentials.json", description="drive credentials")
     drive_shared_id: str = Field(default="", description="shared drive id")
-    drive_folder_id = Field(default="", description="shared drive folder id")
+    drive_folder_id: str = Field(default="", description="shared drive folder id")
     drive_local_download_dir: str = Field(default="./downloads", description="tmp local dir for downloads")
     drive_scopes: list[str] = Field(default=["https://www.googleapis.com/auth/drive.readonly"], description="drive scopes")
-    drive_state_file = str = Field(default=".gdrive_state.json", description="state drive")
+    drive_state_file: str = Field(default=".gdrive_state.json", description="state drive")
 
 
 # Global settings instance
