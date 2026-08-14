@@ -54,7 +54,7 @@ def main():
     # Process documents ONE AT A TIME
     count = 0
     for metadata in processor.stream_new_documents(
-        drive_id=gdrive_settings.drive_shared_id,
+        #drive_id=gdrive_settings.drive_shared_id,
         folder_id=gdrive_settings.drive_folder_id,
         since_date=since,
         date_field="modifiedTime",

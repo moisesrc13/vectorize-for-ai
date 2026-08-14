@@ -1,7 +1,7 @@
 import io
 import logging
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict
 
 from googleapiclient.http import MediaIoBaseDownload
 
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 class GDriveDocumentProcessor:
     def __init__(
         self,
-        client: Optional[GDriveClient] = None,
-        state: Optional[GDriveStateManager] = None,
+        client: GDriveClient | None = None,
+        state: GDriveStateManager | None = None,
         download_dir: Path = Path(gdrive_settings.drive_local_download_dir)
     ):
         self.client = client or GDriveClient()
@@ -27,7 +27,7 @@ class GDriveDocumentProcessor:
     def process_one(
         self,
         file_id: str,
-        handler: Optional[Callable[[bytes, Dict], None]] = None,
+        handler: Callable[[bytes, Dict]] | None = None,
         download: bool = False
     ) -> Dict:
         """
@@ -95,11 +95,11 @@ class GDriveDocumentProcessor:
 
     def stream_new_documents(
         self,
-        drive_id: Optional[str] = None,
-        folder_id: Optional[str] = None,
-        since_date: Optional[str] = None,
+        drive_id: str | None = None,
+        folder_id: str | None = None,
+        since_date: str | None = None,
         date_field: str = "createdTime",
-        handler: Optional[Callable[[bytes, Dict], None]] = None,
+        handler: Callable[[bytes, Dict]] |  None = None,
         download: bool = False
     ):
         """
