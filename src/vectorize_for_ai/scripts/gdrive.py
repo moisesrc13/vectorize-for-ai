@@ -49,7 +49,7 @@ def main():
     state = GDriveStateManager()
     processor = GDriveDocumentProcessor(client=client, state=state)
 
-    since = args.since
+    since = args.since or "2024-01-15T00:00:00"
 
     # Process documents ONE AT A TIME
     count = 0
