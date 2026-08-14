@@ -12,7 +12,7 @@ from vectorize_for_ai.gdrive_state_manager import GDriveStateManager
 logger = logging.getLogger(__name__)
 
 
-class DocumentProcessor:
+class GDriveDocumentProcessor:
     def __init__(
         self,
         client: Optional[GDriveClient] = None,
