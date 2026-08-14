@@ -1,9 +1,10 @@
-from kb_doc_db.config import settings
-from kb_doc_db.database_handler import DatabaseHandler
-from kb_doc_db.logger import get_logger
 from llama_index.core.schema import BaseNode
 from llama_index.core.vector_stores import VectorStoreQuery, VectorStoreQueryResult
 from llama_index.vector_stores.opensearch import OpensearchVectorClient, OpensearchVectorStore
+
+from vectorize_for_ai.config import settings
+from vectorize_for_ai.database_handler import DatabaseHandler
+from vectorize_for_ai.logger import get_logger
 
 logger = get_logger(__name__)
 

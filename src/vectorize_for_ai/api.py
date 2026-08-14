@@ -5,7 +5,8 @@ from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.security import APIKeyHeader
-from kb_doc_db.base import (
+
+from vectorize_for_ai.base import (
     DeleteNodesBySystemNumberRequest,
     DeleteNodesBySystemNumberResponse,
     SimilaritySearchRequest,
@@ -13,9 +14,9 @@ from kb_doc_db.base import (
     SimilarUseCasesResponse,
     UsesCasesReportRequest,
 )
-from kb_doc_db.config import settings
-from kb_doc_db.embeddings import EmbeddingHandler
-from kb_doc_db.handlers import (
+from vectorize_for_ai.config import settings
+from vectorize_for_ai.embeddings import EmbeddingHandler
+from vectorize_for_ai.handlers import (
     get_similar_usecases_report,
     get_similar_usecases_with_context_report,
     get_task_progress,
@@ -28,11 +29,11 @@ from kb_doc_db.handlers import (
     search_similar_mcp_servers,
     sync_mcp_servers,
 )
-from kb_doc_db.handlers.search_handler import SearchRequest, SearchResponse
-from kb_doc_db.ingestion import DocumentIngestionPipeline
-from kb_doc_db.logger import get_logger
-from kb_doc_db.snow_service import SNOWService
-from kb_doc_db.task_manager import TaskStatus, TaskStatusEnum, set_task_status
+from vectorize_for_ai.handlers.search_handler import SearchRequest, SearchResponse
+from vectorize_for_ai.ingestion import DocumentIngestionPipeline
+from vectorize_for_ai.logger import get_logger
+from vectorize_for_ai.snow_service import SNOWService
+from vectorize_for_ai.task_manager import TaskStatus, TaskStatusEnum, set_task_status
 
 logger = get_logger(__name__)
 
