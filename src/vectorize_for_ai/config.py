@@ -138,11 +138,15 @@ class Settings(BaseSettings):
     # Processing Configuration
     chunk_max_tokens: int = Field(default=512, description="chunk max tokens for processing")
 
+
+class GDriveSettings(BaseSettings):
     # Drive
     drive_credentials_path: str = Field(default="credentials.json", description="drive credentials")
     drive_shared_id: str = Field(default="", description="shared drive id")
     drive_local_download_dir: str = Field(default="./downloads", description="tmp local dir for downloads")
+    drive_scopes: list[str] = Field(default=["https://www.googleapis.com/auth/drive.readonly"], description="drive scopes")
 
 
 # Global settings instance
 settings = Settings()
+gdrive_settings = GDriveSettings()
