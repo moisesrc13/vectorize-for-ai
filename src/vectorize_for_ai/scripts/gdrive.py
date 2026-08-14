@@ -42,33 +42,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Stream and process Google Drive documents one at a time"
     )
-    parser.add_argument("--list-drives", action="store_true", help="List shared drives")
-    parser.add_argument("--drive-id", help="Shared Drive ID")
-    parser.add_argument("--folder-id", help="Folder ID")
     parser.add_argument("--since", help="Only process files created after this date (ISO 8601: 2024-01-15T00:00:00)")
-    parser.add_argument("--date-field", choices=["createdTime", "modifiedTime"], default="createdTime",
-                       help="Which date field to filter on")
-    parser.add_argument("--download", action="store_true", help="Also save files to disk")
-    parser.add_argument("--reset-state", action="store_true", help="Clear state and reprocess everything")
-
     args = parser.parse_args()
 
     client = GDriveClient()
-
-    if args.list_drives:
-        drives = client.list_shared_drives()
-        print("\nAccessible Shared Drives:")
-        for d in drives:
-            print(f"  {d['name']:<30} {d['id']}")
-        return
-
-    # State management
     state = GDriveStateManager()
-    if args.reset_state:
-        state.state = {"last_createdTime": None, "processed_ids": []}
-        state.save()
-        print("State reset. Will process all files.")
-
     processor = GDriveDocumentProcessor(client=client, state=state)
 
     since = args.since
@@ -79,9 +57,9 @@ def main():
         drive_id=gdrive_settings.drive_shared_id,
         folder_id=gdrive_settings.drive_folder_id,
         since_date=since,
-        date_field=args.date_field,
+        date_field="modifiedTime",
         handler=print_handler,  # <-- Replace with your custom handler
-        download=args.download
+        download=gdrive_settings.drive_local_download_dir
     ):
         count += 1
         # You can access metadata here and do additional per-file work
