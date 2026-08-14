@@ -1,0 +1,143 @@
+from datetime import datetime
+from typing import Any, Literal
+
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+    mode: Literal["loader", "api", "loader_and_api"] = Field(
+        default="loader_and_api", description="Application mode (loader, api, loader_and_api)"
+    )
+    api_key: SecretStr = Field(..., description="API key for authentication")
+    log_level: str = Field(default="INFO", description="Logging level")
+    # loader config
+    loader_start_date: str = Field(
+        description="loader start date in ISO format (YYYY-MM-DD)",
+        default=datetime.now().strftime("%Y-%m-%d"),
+    )
+
+    # IBM COS Configuration
+    cos_endpoint: str = Field(..., description="IBM COS endpoint URL")
+    cos_api_key: str = Field(..., description="IBM COS API key")
+    cos_instance_id: str = Field(..., description="IBM COS instance ID")
+    cos_bucket_name: str = Field(..., description="IBM COS bucket name")
+    cos_auth_endpoint: str = Field(
+        default="https://iam.cloud.ibm.com/identity/token",
+        description="IBM COS authentication endpoint",
+    )
+
+    # Database Configuration
+    database_type: Literal["milvus", "opensearch"] = Field(
+        default="milvus",
+        description="Database type to use for ingestion (milvus or opensearch)",
+    )
+
+    # OpenSearch Configuration
+    opensearch_host: str = Field(default="localhost", description="OpenSearch host")
+    opensearch_port: int = Field(default=9200, description="OpenSearch port")
+    opensearch_user: str = Field(default="admin", description="OpenSearch username")
+    opensearch_password: str = Field(default="", description="OpenSearch password")
+    opensearch_index_name: str = Field(default="documents", description="OpenSearch index name")
+    opensearch_use_ssl: bool = Field(default=True, description="Use SSL for OpenSearch connection")
+    opensearch_verify_certs: bool = Field(default=True, description="Verify SSL certificates")
+    opensearch_embedding_field: str = Field(
+        default="embedding", description="OpenSearch field name for embeddings"
+    )
+    opensearch_text_field: str = Field(
+        default="content", description="OpenSearch field name for text content"
+    )
+
+    @property
+    def opensearch_index_config(self) -> dict[str, Any]:
+        return {
+            "settings": {
+                "index": {
+                    "knn": True,
+                    "knn.algo_param.ef_search": 100,
+                    "analysis": {"analyzer": {"default": {"type": "standard"}}},
+                }
+            },
+            "mappings": {
+                "properties": {
+                    "embedding": {
+                        "type": "knn_vector",
+                        "dimension": self.milvus_embedding_dimensions,
+                        "method": {
+                            "name": "hnsw",
+                            "space_type": "l2",
+                            "engine": "faiss",
+                            "parameters": {"ef_construction": 256, "m": 48},
+                        },
+                    },
+                    "content": {
+                        "type": "text",
+                        "analyzer": "standard",
+                        "term_vector": "with_positions_offsets",
+                    },
+                    "metadata": {
+                        "properties": {
+                            "ai_services": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                                "null_value": "",
+                            },
+                            "agentic_solution_type": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                                "null_value": "",
+                            },
+                            "ai_system_id": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                                "null_value": "",
+                            },
+                            "sys_created_on": {"type": "date", "null_value": ""},
+                            "attachment_name": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                                "null_value": "",
+                            },
+                            "short_description": {"type": "text", "null_value": ""},
+                            "expected_benefit": {"type": "text", "null_value": ""},
+                            "name": {
+                                "type": "text",
+                                "fields": {"keyword": {"type": "keyword"}},
+                                "null_value": "",
+                            },
+                        }
+                    },
+                }
+            },
+        }
+
+    @property
+    def opensearch_uri(self) -> str:
+        if settings.opensearch_use_ssl:
+            return f"https://{self.opensearch_host}:{self.opensearch_port}"
+        return f"http://{self.opensearch_host}:{self.opensearch_port}"
+
+    # Embedding Model Configuration
+    embedding_model_name: str = Field(
+        default="BAAI/bge-small-en-v1.5",
+        description="HuggingFace embedding model name",
+    )
+
+    # FastAPI Configuration
+    api_host: str = Field(default="0.0.0.0", description="FastAPI host")
+    api_port: int = Field(default=8010, description="FastAPI port")
+    api_title: str = Field(default="Hybrid Search API", description="FastAPI application title")
+    api_version: str = Field(default="1.0.0", description="API version")
+
+    # Processing Configuration
+    chunk_max_tokens: int = Field(default=512, description="chunk max tokens for processing")
+
+
+# Global settings instance
+settings = Settings()
