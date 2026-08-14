@@ -8,11 +8,11 @@ from vectorize_for_ai.config import gdrive_settings
 logger = logging.getLogger(__name__)
 
 
-class GdriveStateManager:
+class GDriveStateManager:
     """Tracks last processed timestamp so we only fetch new documents."""
 
-    def __init__(self, state_file: Path = gdrive_settings.drive_state_file):
-        self.state_file = state_file
+    def __init__(self):
+        self.state_file = Path(gdrive_settings.drive_state_file)
         self.state = self._load()
 
     def _load(self) -> dict:

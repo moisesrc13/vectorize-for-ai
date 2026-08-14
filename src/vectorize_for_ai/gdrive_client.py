@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Dict, Iterator, Optional
+from typing import Iterator
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -26,12 +26,12 @@ class GDriveClient:
 
     def list_files_incremental(
         self,
-        drive_id: Optional[str] = None,
-        folder_id: Optional[str] = None,
-        since_date: Optional[str] = None,
+        drive_id: str | None = None,
+        folder_id: str | None = None,
+        since_date: str | None = None,
         date_field: str = "createdTime",  # or "modifiedTime"
         page_size: int = 100
-    ) -> Iterator[Dict]:
+    ) -> Iterator[dict]:
         """
         Stream files one at a time. Only returns files created/modified after since_date.
         since_date: ISO 8601 string, e.g. '2024-01-15T10:30:00'
@@ -82,7 +82,7 @@ class GDriveClient:
                 logger.error(f"Error listing files: {e}")
                 raise
 
-    def get_file_metadata(self, file_id: str) -> Dict:
+    def get_file_metadata(self, file_id: str) -> dict:
         return self.service.files().get(
             fileId=file_id,
             supportsAllDrives=True,
