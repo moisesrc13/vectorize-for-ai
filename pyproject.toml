@@ -29,7 +29,9 @@ dependencies = [
     "google-api-python-client (>=2.198.0,<3.0.0)",
     "pymilvus[model] (>=3.0.1,<4.0.0)",
     "fakeredis (>=2.37.0,<3.0.0)",
-    "redis (>=8.1.0,<9.0.0)"
+    "redis (>=8.1.0,<9.0.0)",
+    "ghostscript (>=0.8.1,<0.9.0)",
+    "gigatoken (>=0.10.0,<0.11.0)"
 ]
 
 [tool.poetry]

@@ -28,6 +28,52 @@ from llama_index.readers.docling import DoclingReader
 logger = get_logger(__name__)
 
 
+def remove_pdf_decorations(pdf_bytes: bytes) -> bytes | None:
+    """Cleans PDF decorations from input bytes and returns the resulting PDF as bytes."""
+    try:
+        import ghostscript
+    except (ImportError, RuntimeError) as e:
+        print(
+            f"Warning: Ghostscript is not available ({e}). Falling back to default backend."
+        )
+        return None
+    with (
+        tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_in,
+        tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_out,
+    ):
+        try:
+            temp_in.write(pdf_bytes)
+            temp_in.close()
+            temp_out.close()
+
+            args = [
+                "ps2pdf",
+                "-dNOPAUSE",
+                "-dBATCH",
+                "-dSAFER",
+                "-sDEVICE=pdfwrite",
+                "-dPreserveAnnots=false",
+                f"-sOutputFile={temp_out.name}",
+                temp_in.name,
+            ]
+
+            ghostscript.Ghostscript(*args)
+
+            if (
+                not pathlib.Path(temp_out.name).exists()
+                or pathlib.Path(temp_out.name).stat().st_size == 0
+            ):
+                return None
+
+            return pathlib.Path(temp_out.name).read_bytes()
+
+        finally:
+            for path in [temp_in.name, temp_out.name]:
+                if pathlib.Path(path).exists():
+                    with contextlib.suppress(OSError):
+                        pathlib.Path(path).unlink()
+
+
 class DocumentIngestionPipeline:
 
     def __init__(self, chunk_max_tokens: int = 512) -> None:
@@ -223,6 +269,15 @@ class DocumentIngestionPipeline:
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
             tmp_file.write(content)
             tmp_path = tmp_file.name
+
+        # For PDFs, attempt to strip decorations before parsing
+        if suffix.lower() == ".pdf":
+            cleaned = remove_pdf_decorations(content)
+            if cleaned:
+                logger.info("PDF decorations removed for %s", filename)
+                Path(tmp_path).write_bytes(cleaned)
+            else:
+                logger.debug("PDF decoration removal skipped for %s (ghostscript unavailable or returned empty)", filename)
 
         try:
             # Parse document with DoclingReader
