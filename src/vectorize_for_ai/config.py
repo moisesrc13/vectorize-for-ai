@@ -110,7 +110,7 @@ class Settings(BaseSettings):
 
     @property
     def opensearch_uri(self) -> str:
-        if settings.opensearch_use_ssl:
+        if self.opensearch_use_ssl:
             return f"https://{self.opensearch_host}:{self.opensearch_port}"
         return f"http://{self.opensearch_host}:{self.opensearch_port}"
 
