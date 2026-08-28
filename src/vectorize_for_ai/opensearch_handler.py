@@ -15,7 +15,7 @@ class OpenSearchHandler(DatabaseHandler):
     def __init__(self) -> None:
         """Initialize OpenSearch handler with LlamaIndex vector store."""
         self.index_name = settings.opensearch_index_name
-        self.embedding_dim = settings.milvus_embedding_dimensions
+        self.embedding_dim = settings.embedding_dimensions
 
         if not settings.opensearch_use_ssl:
             self.client = OpensearchVectorClient(

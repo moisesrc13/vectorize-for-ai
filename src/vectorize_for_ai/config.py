@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Database Configuration
     database_type: Literal["opensearch"] = Field(
         default="opensearch",
-        description="Database type to use for ingestion (milvus or opensearch)",
+        description="Database type to use for ingestion (opensearch)",
     )
 
     # OpenSearch Configuration
