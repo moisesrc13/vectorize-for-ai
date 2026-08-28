@@ -34,7 +34,7 @@ structlog.configure(
         structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
         structlog.processors.StackInfoRenderer(),
         structlog.dev.set_exc_info,
-        structlog.processors.JSONRenderer(),
+        structlog.processors.JSONRenderer(ensure_ascii=False),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),

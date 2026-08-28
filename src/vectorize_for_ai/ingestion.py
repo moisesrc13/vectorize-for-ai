@@ -17,17 +17,16 @@ from docling.document_converter import (
 )
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
 from docling_core.transforms.chunker.tokenizer.base import BaseTokenizer
-from kb_doc_db.base import SNOWSystem
-from kb_doc_db.cos_client import COSClient
-from kb_doc_db.database_factory import DatabaseFactory
-from kb_doc_db.embeddings import EmbeddingHandler
-from kb_doc_db.logger import get_logger
-from kb_doc_db.task_manager import TaskStatusEnum, update_task_status
 from llama_index.core.schema import TextNode
 from llama_index.node_parser.docling import DoclingNodeParser
 from llama_index.readers.docling import DoclingReader
 
+from vectorize_for_ai.database_factory import DatabaseFactory
+from vectorize_for_ai.embeddings import EmbeddingHandler
+from vectorize_for_ai.logger import get_logger
+
 logger = get_logger(__name__)
+
 
 
 def remove_pdf_decorations(pdf_bytes: bytes) -> bytes | None:

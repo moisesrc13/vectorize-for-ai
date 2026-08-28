@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Dict, Iterator, Optional
 
@@ -6,8 +5,9 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 from vectorize_for_ai.config import gdrive_settings
+from vectorize_for_ai.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GDriveClient:

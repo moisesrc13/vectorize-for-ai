@@ -1,11 +1,11 @@
 import json
-import logging
 from pathlib import Path
 from typing import Optional
 
 from vectorize_for_ai.config import gdrive_settings
+from vectorize_for_ai.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GDriveStateManager:

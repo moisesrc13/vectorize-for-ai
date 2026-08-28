@@ -1,5 +1,4 @@
 import io
-import logging
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
@@ -9,8 +8,10 @@ from googleapiclient.http import MediaIoBaseDownload
 from vectorize_for_ai.config import gdrive_settings
 from vectorize_for_ai.gdrive_client import GDriveClient
 from vectorize_for_ai.gdrive_state_manager import GDriveStateManager
+from vectorize_for_ai.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 
 
 class GDriveDocumentProcessor:

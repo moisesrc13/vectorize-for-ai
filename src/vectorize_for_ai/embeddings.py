@@ -8,7 +8,6 @@ from vectorize_for_ai.logger import get_logger
 
 logger = get_logger(__name__)
 
-
 class EmbeddingHandler:
     """Handler for generating dense and sparse embeddings."""
 
