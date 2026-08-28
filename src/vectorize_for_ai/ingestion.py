@@ -33,8 +33,8 @@ def remove_pdf_decorations(pdf_bytes: bytes) -> bytes | None:
     try:
         import ghostscript
     except (ImportError, RuntimeError) as e:
-        print(
-            f"Warning: Ghostscript is not available ({e}). Falling back to default backend."
+        logger.warning(
+            "Ghostscript is not available (%s). Falling back to default backend.", e
         )
         return None
     with (
@@ -141,6 +141,121 @@ class DocumentIngestionPipeline:
             f"{node.metadata.get('expected_benefit', '')}"
         )
 
+
+    # ---------------------------------------------------------------------------
+    # Document ingestion (parsing → embedding → storage)
+    # ---------------------------------------------------------------------------
+
+    def ingest_document(
+        self,
+        content: bytes,
+        metadata: dict,
+        embedding_handler: EmbeddingHandler,
+    ) -> int:
+        """Parse *content*, generate dense + sparse embeddings, and upsert into the
+        vector store.
+
+        Args:
+            content: Raw document bytes.
+            metadata: Google Drive file metadata dict.
+            embedding_handler: Handler used to generate embeddings.
+
+        Returns:
+            Number of nodes indexed.
+        """
+        file_name: str = metadata.get("name", "unknown")
+        mime_type: str = metadata.get("mimeType", "")
+
+        _MIME_TO_EXT: dict[str, str] = {
+            "text/plain": ".txt",
+            "text/csv": ".csv",
+            "application/pdf": ".pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+            "image/png": ".png",
+            "image/jpeg": ".jpg",
+        }
+        suffix = _MIME_TO_EXT.get(mime_type, Path(file_name).suffix or ".bin")
+        ext = suffix.lstrip(".")
+
+        nodes: list[TextNode] = []
+
+        # Determine if the format is supported by Docling
+        supported = False
+        for fmt in InputFormat:
+            exts = FormatToExtensions.get(fmt) or []
+            if ext in exts or fmt.value == ext:
+                supported = True
+                break
+
+        if supported:
+            converter = self._get_converter_pipeline(ext)
+            if converter is not None:
+                with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                    tmp.write(content)
+                    tmp_path = tmp.name
+                try:
+                    reader = DoclingReader(export_type=DoclingReader.ExportType.JSON)
+                    documents = reader.load_data(file_path=tmp_path)
+                    if documents:
+                        for doc in documents:
+                            doc.metadata.update(
+                                {
+                                    "file_name": file_name,
+                                    "gdrive_id": metadata.get("id", ""),
+                                    "created_time": metadata.get("createdTime", ""),
+                                    "mime_type": mime_type,
+                                }
+                            )
+                        nodes = self.node_parser.get_nodes_from_documents(documents)
+                except Exception as parse_err:
+                    logger.warning(
+                        "Docling parsing failed for %s, falling back to plain-text node: %s",
+                        file_name,
+                        parse_err,
+                    )
+                finally:
+                    Path(tmp_path).unlink(missing_ok=True)
+
+        # Fallback: single TextNode from raw text content
+        if not nodes:
+            try:
+                text = content.decode("utf-8", errors="replace")
+            except Exception:
+                text = repr(content[:500])
+            nodes = [
+                TextNode(
+                    text=text,
+                    metadata={
+                        "file_name": file_name,
+                        "gdrive_id": metadata.get("id", ""),
+                        "created_time": metadata.get("createdTime", ""),
+                        "mime_type": mime_type,
+                    },
+                )
+            ]
+
+        if not nodes:
+            logger.warning("No nodes extracted from %s", file_name)
+            return 0
+
+        # Remove 'origin' metadata to avoid OpenSearch numeric-overflow issues
+        for node in nodes:
+            node.metadata.pop("origin", None)
+
+        # Dense embeddings
+        texts = [node.get_content() for node in nodes]
+        dense_embeddings = embedding_handler.get_dense_embeddings(texts)
+        for node, dense_emb in zip(nodes, dense_embeddings):
+            node.embedding = dense_emb
+
+        # Sparse embeddings (BM25) stored as JSON string for hybrid search
+        sparse_embeddings = embedding_handler.get_sparse_embeddings(texts)
+        for node, sparse_emb in zip(nodes, sparse_embeddings):
+            node.metadata["sparse_embedding"] = json.dumps(sparse_emb)
+
+        node_ids = self._insert_nodes(nodes, file_name)
+        return len(node_ids)
 
     def _delete_nodes_by_system_number(self, ai_system_number: str) -> int:
         """delete nodes by ai system id number"""
