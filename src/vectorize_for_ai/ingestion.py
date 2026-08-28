@@ -1,12 +1,14 @@
 import contextlib
+import json
 import pathlib
 import tempfile
+from pathlib import Path
 from typing import Any
 
 import tiktoken
 from docling.datamodel.accelerator_options import AcceleratorOptions
 from docling.datamodel.base_models import FormatToExtensions, InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TableStructureOptions
 from docling.document_converter import (
     DocumentConverter,
     ImageFormatOption,
@@ -16,7 +18,7 @@ from docling.document_converter import (
 )
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
 from docling_core.transforms.chunker.tokenizer.base import BaseTokenizer
-from llama_index.core.schema import TextNode
+from llama_index.core.schema import BaseNode, TextNode
 from llama_index.node_parser.docling import DoclingNodeParser
 from llama_index.readers.docling import DoclingReader
 
@@ -178,7 +180,7 @@ class DocumentIngestionPipeline:
         suffix = _MIME_TO_EXT.get(mime_type, Path(file_name).suffix or ".bin")
         ext = suffix.lstrip(".")
 
-        nodes: list[TextNode] = []
+        nodes: list[BaseNode] = []
 
         # Determine if the format is supported by Docling
         supported = False
@@ -280,7 +282,7 @@ class DocumentIngestionPipeline:
 
     def _get_converter_pipeline(self, file_extension: str) -> DocumentConverter | None:
         try:
-            if file_extension in FormatToExtensions.get(InputFormat.IMAGE):
+            if file_extension in (FormatToExtensions.get(InputFormat.IMAGE) or []):
                 file_extension = InputFormat.IMAGE.value
             input_format = InputFormat(file_extension)
         except Exception as err:
@@ -294,7 +296,7 @@ class DocumentIngestionPipeline:
                     pipeline_options = self._create_pipeline_options()
                     pipeline_options.do_ocr = True
                     pipeline_options.do_table_structure = True
-                    pipeline_options.table_structure_options.do_cell_matching = True
+                    pipeline_options.table_structure_options = TableStructureOptions(do_cell_matching=True)
                     converter = DocumentConverter(
                         format_options={
                             input_format: PdfFormatOption(

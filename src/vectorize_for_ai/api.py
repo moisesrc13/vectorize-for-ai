@@ -167,6 +167,12 @@ async def search_endpoint(
     return await search(request, ingestion_pipeline, embedding_handler)
 
 
+def _get_ingestion_pipeline() -> DocumentIngestionPipeline:
+    if ingestion_pipeline is None:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    return ingestion_pipeline
+
+
 @app.post("/ingest", response_model=IngestResponse, status_code=status.HTTP_202_ACCEPTED)
 async def ingest_endpoint(
     request: IngestRequest,
@@ -174,6 +180,7 @@ async def ingest_endpoint(
     _: Annotated[None, Depends(authenticate)],
     r: Annotated[fakeredis.FakeRedis, Depends(_get_redis)],
     emb: Annotated[EmbeddingHandler, Depends(_get_embedding_handler)],
+    pipeline: Annotated[DocumentIngestionPipeline, Depends(_get_ingestion_pipeline)],
 ) -> IngestResponse:
     """
     Submit a background ingestion job.
@@ -197,6 +204,7 @@ async def ingest_endpoint(
         start_date=start_date_str,
         redis_client=r,
         embedding_handler=emb,
+        pipeline=pipeline,
     )
 
     return IngestResponse(
