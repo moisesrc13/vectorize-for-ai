@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     opensearch_text_field: str = Field(
         default="content", description="OpenSearch field name for text content"
     )
+    embedding_dimensions: int = Field(default=384, description="Embedding vector dimensions")
 
     @property
     def opensearch_index_config(self) -> dict[str, Any]:
@@ -58,7 +59,7 @@ class Settings(BaseSettings):
                 "properties": {
                     "embedding": {
                         "type": "knn_vector",
-                        "dimension": self.milvus_embedding_dimensions,
+                        "dimension": self.embedding_dimensions,
                         "method": {
                             "name": "hnsw",
                             "space_type": "l2",
