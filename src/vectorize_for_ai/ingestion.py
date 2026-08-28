@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import tiktoken
 from docling.datamodel.accelerator_options import AcceleratorOptions
 from docling.datamodel.base_models import FormatToExtensions, InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -15,6 +16,7 @@ from docling.document_converter import (
     WordFormatOption,
 )
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
+from docling_core.transforms.chunker.tokenizer.base import BaseTokenizer
 from kb_doc_db.base import SNOWSystem
 from kb_doc_db.cos_client import COSClient
 from kb_doc_db.database_factory import DatabaseFactory
@@ -74,6 +76,28 @@ def remove_pdf_decorations(pdf_bytes: bytes) -> bytes | None:
                         pathlib.Path(path).unlink()
 
 
+class TiktokenTokenizer(BaseTokenizer):
+    """Tiktoken-based tokenizer for use with HybridChunker.
+
+    Uses OpenAI's tiktoken library (cl100k_base encoding, same as GPT-4/gpt-4o)
+    to count tokens, giving accurate chunk sizes when content will be sent to
+    OpenAI-compatible models.
+    """
+
+    encoding_name: str = "cl100k_base"
+    max_tokens: int = 512
+
+    def count_tokens(self, text: str) -> int:
+        enc = tiktoken.get_encoding(self.encoding_name)
+        return len(enc.encode(text))
+
+    def get_max_tokens(self) -> int:
+        return self.max_tokens
+
+    def get_tokenizer(self) -> tiktoken.Encoding:
+        return tiktoken.get_encoding(self.encoding_name)
+
+
 class DocumentIngestionPipeline:
 
     def __init__(self, chunk_max_tokens: int = 512) -> None:
@@ -86,12 +110,17 @@ class DocumentIngestionPipeline:
             device="cpu",
         )
 
-        # Initialize DoclingNodeParser for chunking
-        chunker = HybridChunker(max_tokens=chunk_max_tokens, merge_peers=True)
+        # Initialize DoclingNodeParser with tiktoken-based chunker for
+        # accurate token counting (cl100k_base / GPT-4 encoding)
+        tokenizer = TiktokenTokenizer(max_tokens=chunk_max_tokens)
+        chunker = HybridChunker(tokenizer=tokenizer, merge_peers=True)
         self.node_parser = DoclingNodeParser(
             chunker=chunker,
         )
-        logger.info("Initialized DoclingNodeParser for document chunking")
+        logger.info(
+            "Initialized DoclingNodeParser with TiktokenTokenizer (cl100k_base, max_tokens=%d)",
+            chunk_max_tokens,
+        )
 
     def _create_pipeline_options(self) -> PdfPipelineOptions:
         """Create pipeline options with accelerator configuration."""
