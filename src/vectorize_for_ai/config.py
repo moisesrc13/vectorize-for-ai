@@ -76,31 +76,26 @@ class Settings(BaseSettings):
                         "properties": {
                             "ai_services": {
                                 "type": "text",
-                                "fields": {"keyword": {"type": "keyword"}},
-                                "null_value": "",
+                                "fields": {"keyword": {"type": "keyword", "null_value": ""}},
                             },
                             "agentic_solution_type": {
                                 "type": "text",
-                                "fields": {"keyword": {"type": "keyword"}},
-                                "null_value": "",
+                                "fields": {"keyword": {"type": "keyword", "null_value": ""}},
                             },
                             "ai_system_id": {
                                 "type": "text",
-                                "fields": {"keyword": {"type": "keyword"}},
-                                "null_value": "",
+                                "fields": {"keyword": {"type": "keyword", "null_value": ""}},
                             },
-                            "sys_created_on": {"type": "date", "null_value": ""},
+                            "sys_created_on": {"type": "date", "null_value": "1970-01-01"},
                             "attachment_name": {
                                 "type": "text",
-                                "fields": {"keyword": {"type": "keyword"}},
-                                "null_value": "",
+                                "fields": {"keyword": {"type": "keyword", "null_value": ""}},
                             },
-                            "short_description": {"type": "text", "null_value": ""},
-                            "expected_benefit": {"type": "text", "null_value": ""},
+                            "short_description": {"type": "text"},
+                            "expected_benefit": {"type": "text"},
                             "name": {
                                 "type": "text",
-                                "fields": {"keyword": {"type": "keyword"}},
-                                "null_value": "",
+                                "fields": {"keyword": {"type": "keyword", "null_value": ""}},
                             },
                         }
                     },
