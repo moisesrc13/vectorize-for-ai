@@ -1,14 +1,7 @@
 """Embedding generation for dense and sparse vectors."""
 
-import torch._dynamo
-
-# Disable TorchDynamo/Inductor compilation globally.
-# The transformer models used here (small HuggingFace encoders, docling layout)
-# are not compile-friendly: dynamo hits SymPy BooleanAtom errors from the
-# inductor's symbolic shape reasoning, and capture_scalar_outputs alone is
-# insufficient to prevent them. Eager mode is correct and fast enough.
-torch._dynamo.config.suppress_errors = True
-torch._dynamo.disable()
+# torch._dynamo is disabled globally in vectorize_for_ai/__init__.py
+# before any model is imported. No need to repeat it here.
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pymilvus.model.sparse import BM25EmbeddingFunction
