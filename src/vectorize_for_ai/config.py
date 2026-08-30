@@ -35,8 +35,8 @@ class Settings(BaseSettings):
     opensearch_user: str = Field(default="admin", description="OpenSearch username")
     opensearch_password: str = Field(default="", description="OpenSearch password")
     opensearch_index_name: str = Field(default="documents", description="OpenSearch index name")
-    opensearch_use_ssl: bool = Field(default=True, description="Use SSL for OpenSearch connection")
-    opensearch_verify_certs: bool = Field(default=True, description="Verify SSL certificates")
+    opensearch_use_ssl: bool = Field(default=False, description="Use SSL for OpenSearch connection")
+    opensearch_verify_certs: bool = Field(default=False, description="Verify SSL certificates")
     opensearch_embedding_field: str = Field(
         default="embedding", description="OpenSearch field name for embeddings"
     )
