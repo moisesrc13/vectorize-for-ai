@@ -72,6 +72,33 @@ class GDriveClient:
         Recursively stream files from a drive or folder.
         Only returns files (not folders) matching the date filter.
         """
+        # CASE 0: No drive_id or folder_id — search across all drives the service account can access
+        if not drive_id and not folder_id:
+            query = "trashed=false"
+            if since_date:
+                query += f" and {date_field} > '{since_date}'"
+            query += f" and mimeType != '{self.folder_mime}'"
+
+            logger.info(f"Searching all drives for files {date_field} > {since_date or 'ALL TIME'}")
+            page_token = None
+            while True:
+                params = {
+                    "q": query,
+                    "pageSize": 100,
+                    "fields": "nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime, webViewLink, parents, driveId, md5Checksum)",
+                    "supportsAllDrives": True,
+                    "includeItemsFromAllDrives": True,
+                    "corpora": "allDrives",
+                }
+                if page_token:
+                    params["pageToken"] = page_token
+                results = self.service.files().list(**params).execute()
+                yield from results.get("files", [])
+                page_token = results.get("nextPageToken")
+                if not page_token:
+                    break
+            return
+
         # CASE 1: Entire shared drive — API can search across all folders at once
         if drive_id and not folder_id:
             query = "trashed=false"
