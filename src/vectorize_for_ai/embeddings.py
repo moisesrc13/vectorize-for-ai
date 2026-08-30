@@ -1,6 +1,11 @@
 """Embedding generation for dense and sparse vectors."""
 
 import torch._dynamo
+
+# Set globally at import time so every torch model (docling, HuggingFace, etc.)
+# is covered before any pipeline executes.
+torch._dynamo.config.capture_scalar_outputs = True
+
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pymilvus.model.sparse import BM25EmbeddingFunction
 
@@ -14,9 +19,6 @@ class EmbeddingHandler:
 
     def __init__(self) -> None:
         """Initialize embedding models."""
-        # Prevent graph breaks caused by Tensor.item() calls inside transformers
-        # when TorchDynamo attempts to trace the HuggingFace model.
-        torch._dynamo.config.capture_scalar_outputs = True
         self.dense_model = self._initialize_dense_model()
         self.sparse_model = self._initialize_sparse_model()
 
