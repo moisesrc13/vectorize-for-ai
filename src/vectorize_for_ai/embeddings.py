@@ -2,9 +2,13 @@
 
 import torch._dynamo
 
-# Set globally at import time so every torch model (docling, HuggingFace, etc.)
-# is covered before any pipeline executes.
-torch._dynamo.config.capture_scalar_outputs = True
+# Disable TorchDynamo/Inductor compilation globally.
+# The transformer models used here (small HuggingFace encoders, docling layout)
+# are not compile-friendly: dynamo hits SymPy BooleanAtom errors from the
+# inductor's symbolic shape reasoning, and capture_scalar_outputs alone is
+# insufficient to prevent them. Eager mode is correct and fast enough.
+torch._dynamo.config.suppress_errors = True
+torch._dynamo.disable()
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pymilvus.model.sparse import BM25EmbeddingFunction

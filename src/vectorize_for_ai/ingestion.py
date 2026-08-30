@@ -138,9 +138,7 @@ class DocumentIngestionPipeline:
         """
         return (
             f"{node.get_content()}|"
-            f"{node.metadata.get('name', '')}|"
-            f"{node.metadata.get('short_description', '')}|"
-            f"{node.metadata.get('expected_benefit', '')}"
+            f"{node.metadata.get('name', '')}"
         )
 
 
