@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any
 
 import tiktoken
+from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.datamodel.accelerator_options import AcceleratorOptions
 from docling.datamodel.base_models import FormatToExtensions, InputFormat
-from docling.datamodel.pipeline_options import PdfBackend, PdfPipelineOptions, TableStructureOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import (
     DocumentConverter,
     ImageFormatOption,
@@ -121,9 +122,9 @@ class DocumentIngestionPipeline:
             chunk_max_tokens,
         )
 
-    def _create_pipeline_options(self, pdf_backend: PdfBackend = PdfBackend.PYPDFIUM2) -> PdfPipelineOptions:
+    def _create_pipeline_options(self) -> PdfPipelineOptions:
         """Create pipeline options with accelerator configuration."""
-        pipeline_options = PdfPipelineOptions(pdf_backend=pdf_backend)
+        pipeline_options = PdfPipelineOptions()
         pipeline_options.accelerator_options = self.accelerator_options
         return pipeline_options
 
@@ -291,13 +292,14 @@ class DocumentIngestionPipeline:
         try:
             match input_format:
                 case InputFormat.PDF:
-                    pipeline_options = self._create_pipeline_options(pdf_backend=PdfBackend.PYPDFIUM2)
+                    pipeline_options = self._create_pipeline_options()
                     pipeline_options.do_ocr = False
                     pipeline_options.do_table_structure = False
                     converter = DocumentConverter(
                         format_options={
                             input_format: PdfFormatOption(
                                 pipeline_options=pipeline_options,
+                                backend=PyPdfiumDocumentBackend,
                             )
                         }
                     )
