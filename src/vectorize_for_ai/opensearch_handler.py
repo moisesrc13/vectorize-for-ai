@@ -43,6 +43,10 @@ class OpenSearchHandler(DatabaseHandler):
 
         self.vector_store = OpensearchVectorStore(self.client)
 
+        # LlamaIndex defers index creation until first use; trigger it eagerly
+        # at startup so the index exists before any ingestion or query occurs.
+        self.client._ensure_initialized()
+
         logger.info(
             "Initialized OpensearchVectorStore for index %s at %s",
             self.index_name,
