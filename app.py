@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 def main() -> None:
     """Start the uvicorn ASGI server."""
     # Bind only to localhost; never expose on 0.0.0.0 (all interfaces).
-    host = "127.0.0.1"
+    host = "0.0.0.0"
     if settings.api_host not in ("0.0.0.0", ""):
         # Honour an explicit non-wildcard override from the environment.
         host = settings.api_host

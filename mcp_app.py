@@ -1,16 +1,13 @@
 """MCP server exposing a search tool that calls the vectorize-for-ai search API."""
 
-import os
-
 import httpx
 from mcp.server.fastmcp import FastMCP
+
+from vectorize_for_ai.config import settings
 
 # ---------------------------------------------------------------------------
 # Configuration — resolved from environment variables
 # ---------------------------------------------------------------------------
-
-SEARCH_API_URL = os.environ.get("SEARCH_API_URL", "http://127.0.0.1:8010/search")
-SEARCH_API_KEY = os.environ.get("SEARCH_API_KEY", "")
 
 mcp = FastMCP("vectorize-search")
 
@@ -37,7 +34,7 @@ async def search(
         A dict containing the original query, a list of results (id, text, score,
         metadata), and the total count of results returned.
     """
-    if not SEARCH_API_KEY:
+    if not settings.api_key:
         raise ValueError(
             "SEARCH_API_KEY environment variable is not set. "
             "Set it to the API key required by the search service."
@@ -51,12 +48,12 @@ async def search(
 
     headers = {
         "accept": "application/json",
-        "api-key": SEARCH_API_KEY,
+        "api-key": settings.api_key,
         "Content-Type": "application/json",
     }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(SEARCH_API_URL, json=payload, headers=headers)
+        resp = await client.post(f"http://{settings.api_host}:{settings.api_port}", json=payload, headers=headers)
 
     if resp.status_code != 200:
         raise RuntimeError(
