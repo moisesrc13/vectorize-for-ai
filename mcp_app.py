@@ -72,7 +72,6 @@ async def search(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    if __name__ == "__main__":
     try:
         asyncio.run(
             mcp.run_async(
