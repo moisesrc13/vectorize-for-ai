@@ -24,8 +24,8 @@ mcp = FastMCP("vectorize-search")
 @mcp.tool()
 async def search(
     query: str,
-    limit: int = 10,
-    similarity_top_k: int = 10,
+    #limit: int = 10,
+    #similarity_top_k: int = 10,
 ) -> str:
     """Search for documents in the vector store.
 
@@ -45,8 +45,8 @@ async def search(
 
     payload = {
         "query": query,
-        "limit": limit,
-        "similarity_top_k": similarity_top_k,
+        "limit": 10,
+        "similarity_top_k": 10,
     }
 
     headers = {
