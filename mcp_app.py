@@ -3,7 +3,7 @@
 import asyncio
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 from vectorize_for_ai.config import settings
 from vectorize_for_ai.logger import get_logger
