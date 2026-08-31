@@ -56,7 +56,7 @@ async def search(
     }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(f"http://{settings.api_host}:{settings.api_port}", json=payload, headers=headers)
+        resp = await client.post(f"http://{settings.api_host}:{settings.api_port}/search", json=payload, headers=headers)
 
     if resp.status_code != 200:
         raise RuntimeError(
