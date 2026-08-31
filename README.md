@@ -32,3 +32,15 @@ podman run -d \
 podman run -d -p 3000:8080 -v open-webui-dev:/app/backend/data --name open-webui-dev ghcr.io/open-webui/open-webui:dev
 
 [local link](http://0.0.0.0:3000)
+
+### with OpenSearch
+
+podman run -d -p 3000:8080 \
+  -e VECTOR_DB=documents \
+  -e OPENSEARCH_URI="http://docker.internal" \
+  -e OPENSEARCH_USERNAME="admin" \
+  -e OPENSEARCH_PASSWORD="<pwd>" \
+  -v open-webui-dev:/app/backend/data \
+  --name open-webui-dev \
+  --restart always \
+  ghcr.io/open-webui/open-webui:main
