@@ -151,8 +151,7 @@ class OpenSearchHandler(DatabaseHandler):
 
     def close(self) -> None:
         try:
-            if hasattr(self.client, "_client") and self.client._client:
-                self.client._client.close()
+            self.client.close()
             logger.info("Disconnected from OpenSearch")
         except Exception as e:
             logger.warning("error disconnecting from OpenSearch: %s", e)
