@@ -48,3 +48,6 @@ podman run -d -p 3000:8080 \
 ## MCP Server
 
 `python mcp_app.py`
+
+
+connecting from OpenWEB ui, point to `http://host.docker.internal:8443/mcp`

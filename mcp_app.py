@@ -26,7 +26,7 @@ async def search(
     query: str,
     limit: int = 10,
     similarity_top_k: int = 10,
-) -> dict:
+) -> str:
     """Search for documents in the vector store.
 
     Args:
@@ -35,8 +35,7 @@ async def search(
         similarity_top_k: Number of top similar results to retrieve (1-100, default 10).
 
     Returns:
-        A dict containing the original query, a list of results (id, text, score,
-        metadata), and the total count of results returned.
+        Numbered list of relevant document passages, ready for an LLM to consume.
     """
     if not settings.api_key:
         raise ValueError(
@@ -64,7 +63,17 @@ async def search(
             f"Search API returned HTTP {resp.status_code}: {resp.text}"
         )
 
-    return resp.json()
+    data = resp.json()
+    results = data.get("results", [])
+
+    if not results:
+        return f'No results found for query: "{query}"'
+
+    passages = []
+    for i, result in enumerate(results, start=1):
+        passages.append(f"[{i}] {result['text'].strip()}")
+
+    return f'Search results for "{query}":\n\n' + "\n\n".join(passages)
 
 
 # ---------------------------------------------------------------------------
