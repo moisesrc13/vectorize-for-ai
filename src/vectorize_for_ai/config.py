@@ -97,6 +97,11 @@ class Settings(BaseSettings):
     # Processing Configuration
     chunk_max_tokens: int = Field(default=512, description="chunk max tokens for processing")
 
+    # mcp
+    mcp_host: str = Field(default="0.0.0.0", description="mcp server host")
+    mcp_port: int = Field(default=8443, description="mcp server port")
+
+
 
 class GDriveSettings(BaseSettings):
     drive_credentials_path: str = Field(default="credentials.json", description="drive credentials")

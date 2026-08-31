@@ -44,3 +44,7 @@ podman run -d -p 3000:8080 \
   --name open-webui-dev \
   --restart always \
   ghcr.io/open-webui/open-webui:main
+
+## MCP Server
+
+`python mcp_app.py`

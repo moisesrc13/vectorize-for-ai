@@ -1,10 +1,14 @@
 """MCP server exposing a search tool that calls the vectorize-for-ai search API."""
 
+import asyncio
+
 import httpx
 from mcp.server.fastmcp import FastMCP
 
 from vectorize_for_ai.config import settings
+from vectorize_for_ai.logger import get_logger
 
+logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Configuration — resolved from environment variables
 # ---------------------------------------------------------------------------
@@ -68,4 +72,16 @@ async def search(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    mcp.run(transport="sse")
+    if __name__ == "__main__":
+    try:
+        asyncio.run(
+            mcp.run_async(
+                transport="http", host=settings.mcp_host, port=settings.mcp_port
+            )
+        )
+    except KeyboardInterrupt:
+        logger.info("Server shutdown requested")
+    except Exception:
+        logger.exception("server error")
+    finally:
+        logger.info("server shutdown complete")
