@@ -36,7 +36,7 @@ podman run -d -p 3000:8080 -v open-webui-dev:/app/backend/data --name open-webui
 ### with OpenSearch
 
 podman run -d -p 3000:8080 \
-  -e VECTOR_DB=documents \
+  -e VECTOR_DB=opensearch \
   -e OPENSEARCH_URI="http://docker.internal" \
   -e OPENSEARCH_USERNAME="admin" \
   -e OPENSEARCH_PASSWORD="<pwd>" \
