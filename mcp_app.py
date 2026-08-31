@@ -51,7 +51,7 @@ async def search(
 
     headers = {
         "accept": "application/json",
-        "api-key": settings.api_key,
+        "api-key": settings.api_key.get_secret_value(),
         "Content-Type": "application/json",
     }
 
