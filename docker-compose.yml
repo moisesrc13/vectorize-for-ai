@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      - VECTOR_DB=documents
+      - OPENSEARCH_URI=http://docker.internal
+      - OPENSEARCH_USERNAME=admin
+      - OPENSEARCH_PASSWORD=pwd
+    restart: always
+
+volumes:
+  open-webui:

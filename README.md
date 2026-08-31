@@ -26,3 +26,9 @@ podman run -d \
   -e plugins.security.disabled=true \
   opensearchproject/opensearch:latest
 ```
+
+## Open WebUI
+
+podman run -d -p 3000:8080 -v open-webui-dev:/app/backend/data --name open-webui-dev ghcr.io/open-webui/open-webui:dev
+
+[local link](http://0.0.0.0:3000)
