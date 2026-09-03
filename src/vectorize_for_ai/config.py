@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     opensearch_host: str = Field(default="localhost", description="OpenSearch host")
     opensearch_port: int = Field(default=9200, description="OpenSearch port")
     opensearch_user: str = Field(default="admin", description="OpenSearch username")
-    opensearch_password: str = Field(default="", description="OpenSearch password")
+    opensearch_initial_admin_password: str = Field(default="", description="OpenSearch password")
     opensearch_index_name: str = Field(default="documents", description="OpenSearch index name")
     opensearch_use_ssl: bool = Field(default=False, description="Use SSL for OpenSearch connection")
     opensearch_verify_certs: bool = Field(default=False, description="Verify SSL certificates")

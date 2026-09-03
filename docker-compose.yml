@@ -2,13 +2,16 @@ version: '3.8'
 
 services:
   opensearch:
-    image: registry.redhat.io/rhoss/rhel-opensearch:2
+    image: opensearchproject/opensearch:latest
     container_name: opensearch
+    env_file:
+      - .env.shared
     environment:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
     ports:
       - "9200:9200"
+      - "9600:9600"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     healthcheck:
@@ -49,5 +52,19 @@ services:
       - api
     restart: unless-stopped
 
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:dev
+    container_name: open-webui-dev
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-dev:/app/backend/data
+    env_file:
+      - .env.shared
+    depends_on:
+      - mcp
+    restart: unless-stopped
+
 volumes:
   opensearch-data:
+  open-webui-dev:

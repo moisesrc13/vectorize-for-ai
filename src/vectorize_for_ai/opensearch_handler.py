@@ -39,7 +39,7 @@ class OpenSearchHandler(DatabaseHandler):
                 dim=self.embedding_dim,
                 embedding_field=settings.opensearch_embedding_field,
                 text_field=settings.opensearch_text_field,
-                http_auth=(settings.opensearch_user, settings.opensearch_password),
+                http_auth=(settings.opensearch_user, settings.opensearch_initial_admin_password),
                 use_ssl=settings.opensearch_use_ssl,
                 verify_certs=settings.opensearch_verify_certs,
                 idx_conf=settings.opensearch_index_config,
