@@ -1,19 +1,20 @@
-FROM registry.redhat.io/ubi9/python-311-minimal:latest
+FROM registry.access.redhat.com/ubi10/python-312-minimal:latest
 
-# Create non-root user
-RUN useradd -m -u 1001 appuser
+USER root
+
+# Create yum cache dir (required in rootless Podman builds) then install deps
+RUN mkdir -p /var/cache/yum/metadata && \
+    microdnf install -y shadow-utils libxcb mesa-libGL ghostscript openssl openssl-devel gcc-c++ make && \
+    microdnf clean all && \
+    useradd -m -u 1001 appuser
 
 WORKDIR /app
 
-# Install build tools needed by some Python packages
-USER root
-RUN microdnf install -y libxcb mesa-libGL ghostscript openssl openssl-devel gcc-c++ make && microdnf clean all
-
 # Install Poetry and project dependencies
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
-    poetry install --only main --no-interaction --no-ansi
+    poetry install --only main --no-root --no-interaction --no-ansi
 
 # Copy source
 COPY --chown=appuser:appuser src/ ./src/
