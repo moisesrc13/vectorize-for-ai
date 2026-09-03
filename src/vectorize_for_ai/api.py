@@ -105,6 +105,13 @@ def _get_embedding_handler() -> EmbeddingHandler:
 # Pydantic models for /ingest
 # ---------------------------------------------------------------------------
 
+class DeleteNodesByFilenameResponse(BaseModel):
+    """Response for the delete-nodes-by-filename endpoint."""
+
+    file_name: str = Field(..., description="File name that was targeted for deletion")
+    deleted_count: int = Field(..., description="Number of nodes deleted from the index")
+
+
 class IngestRequest(BaseModel):
     """Request body for the ingestion trigger endpoint."""
 
@@ -171,6 +178,28 @@ def _get_ingestion_pipeline() -> DocumentIngestionPipeline:
     if ingestion_pipeline is None:
         raise HTTPException(status_code=503, detail="Service not initialized")
     return ingestion_pipeline
+
+
+@app.delete("/nodes", response_model=DeleteNodesByFilenameResponse)
+async def delete_nodes_by_filename_endpoint(
+    file_name: str,
+    _: Annotated[None, Depends(authenticate)],
+    pipeline: Annotated[DocumentIngestionPipeline, Depends(_get_ingestion_pipeline)],
+) -> DeleteNodesByFilenameResponse:
+    """
+    Delete all indexed nodes whose ``metadata.file_name`` matches *file_name*.
+
+    Pass the exact file name as a query parameter, e.g.:
+
+    ```
+    DELETE /nodes?file_name=8.%20MKDD%20LV-KV-VD%20-%201362-01%20-%20Dep.pdf
+    ```
+    """
+    deleted_count = await pipeline.delete_nodes_by_filename(file_name)
+    await logger.ainfo(
+        "Deleted %d nodes for file_name '%s'", deleted_count, file_name
+    )
+    return DeleteNodesByFilenameResponse(file_name=file_name, deleted_count=deleted_count)
 
 
 @app.post("/ingest", response_model=IngestResponse, status_code=status.HTTP_202_ACCEPTED)

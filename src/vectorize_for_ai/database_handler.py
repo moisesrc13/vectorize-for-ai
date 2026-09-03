@@ -10,8 +10,6 @@ from vectorize_for_ai.logger import get_logger
 
 logger = get_logger(__name__)
 
-logger = get_logger(__name__)
-
 
 class DatabaseHandler(ABC):
     """Abstract base class for database operations using LlamaIndex vector stores."""
@@ -63,6 +61,18 @@ class DatabaseHandler(ABC):
 
         Args:
             ai_system_id: The AI system identifier whose nodes should be deleted
+        """
+        pass
+
+    @abstractmethod
+    async def delete_nodes_by_filename(self, file_name: str) -> int:
+        """Delete all nodes whose metadata.file_name matches *file_name*.
+
+        Args:
+            file_name: Exact file name stored in node metadata.
+
+        Returns:
+            Number of nodes deleted.
         """
         pass
 

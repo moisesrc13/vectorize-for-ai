@@ -7,23 +7,12 @@
 Start container
 
 ```
-docker run -d \
+podman run -d \
   --name opensearch \
   -p 9200:9200 -p 9600:9600 \
   -e "discovery.type=single-node" \
   -e "OPENSEARCH_INITIAL_ADMIN_PASSWORD=<secret>" \
   -v opensearch-data:/usr/share/opensearch/data \
-  opensearchproject/opensearch:latest
-```
-
-without user/password
-
-```
-podman run -d \
-  --name opensearch \
-  -p 9200:9200 -p 5601:5601 \
-  -e discovery.type=single-node \
-  -e plugins.security.disabled=true \
   opensearchproject/opensearch:latest
 ```
 

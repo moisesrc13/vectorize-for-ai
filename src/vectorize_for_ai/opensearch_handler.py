@@ -1,3 +1,5 @@
+import asyncio
+
 from llama_index.core.schema import BaseNode
 from llama_index.core.vector_stores import VectorStoreQuery, VectorStoreQueryResult
 from llama_index.vector_stores.opensearch import OpensearchVectorClient, OpensearchVectorStore
@@ -62,7 +64,7 @@ class OpenSearchHandler(DatabaseHandler):
             if nodes:
                 file_name = nodes[0].metadata.get("file_name")
                 if file_name:
-                    self._delete_nodes_by_filename(file_name)
+                    self._delete_nodes_by_filename_sync(file_name)
 
             # Remove 'origin' from metadata to avoid numeric overflow issues with binary_hash
             for node in nodes:
@@ -109,22 +111,21 @@ class OpenSearchHandler(DatabaseHandler):
             )
         return deleted_count
 
-    def _delete_nodes_by_filename(self, file_name: str) -> None:
+    def _delete_nodes_by_filename_sync(self, file_name: str) -> int:
+        """Synchronous helper — used internally by add_nodes."""
+        deleted_count = 0
         try:
-            # Query to find documents with matching file_name
             logger.info(
                 "Deleting existing nodes with file_name '%s' from OpenSearch index '%s'",
                 file_name,
                 self.index_name,
             )
             query = {"query": {"term": {"metadata.file_name.keyword": file_name}}}
-
             response = self.client._os_client.delete_by_query(
                 index=self.index_name,
                 body=query,
                 refresh=True,
             )
-
             deleted_count = response.get("deleted", 0)
             if deleted_count > 0:
                 logger.info(
@@ -136,6 +137,11 @@ class OpenSearchHandler(DatabaseHandler):
             logger.warning(
                 "Failed to delete existing nodes for file_name '%s': %s", file_name, e
             )
+        return deleted_count
+
+    async def delete_nodes_by_filename(self, file_name: str) -> int:
+        """Async public API — offloads the blocking delete_by_query to a thread."""
+        return await asyncio.to_thread(self._delete_nodes_by_filename_sync, file_name)
 
     def query(
         self,

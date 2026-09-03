@@ -262,6 +262,10 @@ class DocumentIngestionPipeline:
         """delete nodes by ai system id number"""
         return self.db_handler.delete_nodes_by_system_number(ai_system_number)
 
+    async def delete_nodes_by_filename(self, file_name: str) -> int:
+        """Delete all indexed nodes whose metadata.file_name matches *file_name*."""
+        return await self.db_handler.delete_nodes_by_filename(file_name)
+
     def _insert_nodes(self, nodes: list[Any], document_name: str) -> list[str]:
         """Insert nodes into database and log the operation.
 
