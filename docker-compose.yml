@@ -3,7 +3,6 @@ version: '3.8'
 services:
   opensearch:
     image: opensearchproject/opensearch:latest
-    container_name: opensearch
     env_file:
       - .env.shared
     environment:
@@ -23,7 +22,6 @@ services:
 
   api:
     build: .
-    container_name: vectorize-api
     command: python app.py
     env_file:
       - .env.shared
@@ -33,13 +31,11 @@ services:
     ports:
       - "8010:8010"
     depends_on:
-      opensearch:
-        condition: service_healthy
+      - opensearch
     restart: unless-stopped
 
   mcp:
     build: .
-    container_name: vectorize-mcp
     command: python mcp_app.py
     env_file:
       - .env.shared
@@ -54,7 +50,6 @@ services:
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:dev
-    container_name: open-webui-dev
     ports:
       - "3000:8080"
     volumes:
