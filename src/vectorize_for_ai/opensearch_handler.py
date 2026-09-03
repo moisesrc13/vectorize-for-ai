@@ -1,8 +1,10 @@
 import asyncio
+from typing import cast
 
 from llama_index.core.schema import BaseNode
 from llama_index.core.vector_stores import VectorStoreQuery, VectorStoreQueryResult
 from llama_index.vector_stores.opensearch import OpensearchVectorClient, OpensearchVectorStore
+from opensearchpy import OpenSearch
 
 from vectorize_for_ai.config import settings
 from vectorize_for_ai.database_handler import DatabaseHandler
@@ -94,10 +96,10 @@ class OpenSearchHandler(DatabaseHandler):
             query = {
                 "query": {"term": {"metadata.ai_system_id.keyword": ai_system_number}}
             }
-            response = self.client._os_client.delete_by_query(
+            response = cast(OpenSearch, self.client._os_client).delete_by_query(
                 index=self.index_name,
                 body=query,
-                refresh=True,
+                params={"refresh": "true"},
             )
             deleted_count = response.get("deleted", 0)
             logger.info(
@@ -121,10 +123,10 @@ class OpenSearchHandler(DatabaseHandler):
                 self.index_name,
             )
             query = {"query": {"term": {"metadata.file_name.keyword": file_name}}}
-            response = self.client._os_client.delete_by_query(
+            response = cast(OpenSearch, self.client._os_client).delete_by_query(
                 index=self.index_name,
                 body=query,
-                refresh=True,
+                params={"refresh": "true"},
             )
             deleted_count = response.get("deleted", 0)
             if deleted_count > 0:
