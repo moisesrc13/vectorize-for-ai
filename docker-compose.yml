@@ -1,19 +1,53 @@
 version: '3.8'
 
 services:
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
-    ports:
-      - "3000:8080"
-    volumes:
-      - open-webui:/app/backend/data
+  opensearch:
+    image: registry.redhat.io/rhoss/rhel-opensearch:2
+    container_name: opensearch
     environment:
-      - VECTOR_DB=documents
-      - OPENSEARCH_URI=http://docker.internal
-      - OPENSEARCH_USERNAME=admin
-      - OPENSEARCH_PASSWORD=pwd
-    restart: always
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: vectorize-api
+    command: python app.py
+    env_file:
+      - .env.shared
+    environment:
+      - OPENSEARCH_HOST=opensearch
+      - API_HOST=0.0.0.0
+    ports:
+      - "8010:8010"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mcp:
+    build: .
+    container_name: vectorize-mcp
+    command: python mcp_app.py
+    env_file:
+      - .env.shared
+    environment:
+      - API_HOST=api
+      - MCP_HOST=0.0.0.0
+    ports:
+      - "8443:8443"
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
-  open-webui:
+  opensearch-data:
