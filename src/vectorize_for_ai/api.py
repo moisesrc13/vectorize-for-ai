@@ -4,7 +4,7 @@ from datetime import date
 from typing import Annotated
 
 import fakeredis
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, status
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
@@ -102,8 +102,15 @@ def _get_embedding_handler() -> EmbeddingHandler:
 
 
 # ---------------------------------------------------------------------------
-# Pydantic models for /ingest
+# Pydantic models
 # ---------------------------------------------------------------------------
+
+class IngestDocumentResponse(BaseModel):
+    """Response returned after a direct document upload is ingested."""
+
+    file_name: str = Field(..., description="Name of the uploaded file")
+    nodes_indexed: int = Field(..., description="Number of nodes indexed")
+
 
 class DeleteNodesByFilenameResponse(BaseModel):
     """Response for the delete-nodes-by-filename endpoint."""
@@ -178,6 +185,54 @@ def _get_ingestion_pipeline() -> DocumentIngestionPipeline:
     if ingestion_pipeline is None:
         raise HTTPException(status_code=503, detail="Service not initialized")
     return ingestion_pipeline
+
+
+@app.post(
+    "/ingest/document",
+    response_model=IngestDocumentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest a single document via multipart upload",
+)
+async def ingest_document_endpoint(
+    _: Annotated[None, Depends(authenticate)],
+    emb: Annotated[EmbeddingHandler, Depends(_get_embedding_handler)],
+    pipeline: Annotated[DocumentIngestionPipeline, Depends(_get_ingestion_pipeline)],
+    file: Annotated[UploadFile, File(description="Document to ingest (PDF, DOCX, PPTX, TXT, …)")],
+    ai_system_id: Annotated[str, Form(description="AI system identifier stored in node metadata")] = "",
+    gdrive_id: Annotated[str, Form(description="Optional Google Drive file ID")] = "",
+) -> IngestDocumentResponse:
+    """
+    Upload a document as ``multipart/form-data`` and index it immediately.
+
+    The file is parsed by Docling (with a plain-text fallback), chunked,
+    embedded, and inserted into the vector store synchronously.
+
+    **Form fields**
+
+    | Field | Required | Description |
+    |---|---|---|
+    | `file` | ✅ | Binary file content |
+    | `ai_system_id` | ☐ | Stored in ``metadata.ai_system_id`` |
+    | `gdrive_id` | ☐ | Stored in ``metadata.gdrive_id`` |
+    """
+    content = await file.read()
+    file_name = file.filename or "upload"
+    mime_type = file.content_type or "application/octet-stream"
+
+    metadata: dict = {
+        "name": file_name,
+        "mimeType": mime_type,
+        "id": gdrive_id,
+        "ai_system_id": ai_system_id,
+        "createdTime": "",
+    }
+
+    nodes_indexed = await pipeline.ingest_document_async(content, metadata, emb)
+
+    await logger.ainfo(
+        "Ingested document '%s': %d nodes indexed", file_name, nodes_indexed
+    )
+    return IngestDocumentResponse(file_name=file_name, nodes_indexed=nodes_indexed)
 
 
 @app.delete("/nodes", response_model=DeleteNodesByFilenameResponse)

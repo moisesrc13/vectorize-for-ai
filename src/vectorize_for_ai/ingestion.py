@@ -266,6 +266,24 @@ class DocumentIngestionPipeline:
         """Delete all indexed nodes whose metadata.file_name matches *file_name*."""
         return await self.db_handler.delete_nodes_by_filename(file_name)
 
+    async def ingest_document_async(
+        self,
+        content: bytes,
+        metadata: dict,
+        embedding_handler: EmbeddingHandler,
+    ) -> int:
+        """Async wrapper around :meth:`ingest_document` — offloads CPU work to a thread."""
+        import asyncio
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            self.ingest_document,
+            content,
+            metadata,
+            embedding_handler,
+        )
+
     def _insert_nodes(self, nodes: list[Any], document_name: str) -> list[str]:
         """Insert nodes into database and log the operation.
 
