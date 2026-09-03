@@ -85,33 +85,6 @@ class OpenSearchHandler(DatabaseHandler):
             logger.error("Failed to add nodes to OpenSearch: %s", e)
             raise
 
-    def delete_nodes_by_system_number(self, ai_system_number: str) -> int:
-        deleted_count = 0
-        try:
-            logger.info(
-                "Deleting nodes with ai_system_id '%s' from OpenSearch index '%s'",
-                ai_system_number,
-                self.index_name,
-            )
-            query = {
-                "query": {"term": {"metadata.ai_system_id.keyword": ai_system_number}}
-            }
-            response = cast(OpenSearch, self.client._os_client).delete_by_query(
-                index=self.index_name,
-                body=query,
-                params={"refresh": "true"},
-            )
-            deleted_count = response.get("deleted", 0)
-            logger.info(
-                "Deleted %s nodes with ai_system_id '%s' from OpenSearch",
-                deleted_count,
-                ai_system_number,
-            )
-        except Exception as e:
-            logger.warning(
-                "Failed to delete nodes for ai_system_id '%s': %s", ai_system_number, e
-            )
-        return deleted_count
 
     def _delete_nodes_by_filename_sync(self, file_name: str) -> int:
         """Synchronous helper — used internally by add_nodes."""

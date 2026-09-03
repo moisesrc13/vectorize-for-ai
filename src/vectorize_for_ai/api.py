@@ -198,7 +198,6 @@ async def ingest_document_endpoint(
     emb: Annotated[EmbeddingHandler, Depends(_get_embedding_handler)],
     pipeline: Annotated[DocumentIngestionPipeline, Depends(_get_ingestion_pipeline)],
     file: Annotated[UploadFile, File(description="Document to ingest (PDF, DOCX, PPTX, TXT, …)")],
-    ai_system_id: Annotated[str, Form(description="AI system identifier stored in node metadata")] = "",
     gdrive_id: Annotated[str, Form(description="Optional Google Drive file ID")] = "",
 ) -> IngestDocumentResponse:
     """
@@ -212,7 +211,6 @@ async def ingest_document_endpoint(
     | Field | Required | Description |
     |---|---|---|
     | `file` | ✅ | Binary file content |
-    | `ai_system_id` | ☐ | Stored in ``metadata.ai_system_id`` |
     | `gdrive_id` | ☐ | Stored in ``metadata.gdrive_id`` |
     """
     content = await file.read()
@@ -223,7 +221,6 @@ async def ingest_document_endpoint(
         "name": file_name,
         "mimeType": mime_type,
         "id": gdrive_id,
-        "ai_system_id": ai_system_id,
         "createdTime": "",
     }
 

@@ -56,15 +56,6 @@ class DatabaseHandler(ABC):
         pass
 
     @abstractmethod
-    def delete_nodes_by_system_number(self, ai_system_number: str) -> int:
-        """Delete all nodes matching the given ai_system_id number.
-
-        Args:
-            ai_system_id: The AI system identifier whose nodes should be deleted
-        """
-        pass
-
-    @abstractmethod
     async def delete_nodes_by_filename(self, file_name: str) -> int:
         """Delete all nodes whose metadata.file_name matches *file_name*.
 
