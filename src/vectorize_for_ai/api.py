@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 embedding_handler: EmbeddingHandler | None = None
 ingestion_pipeline: DocumentIngestionPipeline | None = None
-redis_client: fakeredis.FakeRedis | None = None
+redis_client: fakeredis.FakeAsyncRedis | None = None
 
 
 @asynccontextmanager
@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI):
         logger.info("Initializing 📃️ document ingestion pipeline")
         ingestion_pipeline = DocumentIngestionPipeline(settings.chunk_max_tokens)
         embedding_handler = EmbeddingHandler()
-        redis_client = fakeredis.FakeRedis(decode_responses=True)
+        redis_client = fakeredis.FakeAsyncRedis(decode_responses=True)
         logger.info(
             "Initialized %s, embedding handlers, and in-process Redis store",
             settings.database_type,
@@ -51,7 +51,7 @@ async def lifespan(_: FastAPI):
     if ingestion_pipeline:
         await ingestion_pipeline.aclose()
     if redis_client:
-        redis_client.close()
+        await redis_client.close()
     logger.info("Shutting down FastAPI application")
 
 
@@ -89,7 +89,7 @@ app = FastAPI(
 # Helper: dependency accessors
 # ---------------------------------------------------------------------------
 
-def _get_redis() -> fakeredis.FakeRedis:
+def _get_redis() -> fakeredis.FakeAsyncRedis:
     if redis_client is None:
         raise HTTPException(status_code=503, detail="Service not initialized")
     return redis_client
@@ -309,7 +309,7 @@ async def ingest_job_status_endpoint(
 
     Job records expire automatically after 1 hour (TTL).
     """
-    job_data = _get_job(r, job_id)
+    job_data = await _get_job(r, job_id)
     if job_data is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

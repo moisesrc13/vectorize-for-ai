@@ -26,16 +26,16 @@ def _build_job_key(job_id: str) -> str:
     return f"ingest:job:{job_id}"
 
 
-def _set_job(redis_client, job_id: str, data: dict) -> None:
-    redis_client.set(
+async def _set_job(redis_client, job_id: str, data: dict) -> None:
+    await redis_client.set(
         _build_job_key(job_id),
         json.dumps(data),
         ex=JOB_TTL_SECONDS,
     )
 
 
-def _get_job(redis_client, job_id: str) -> dict | None:
-    raw = redis_client.get(_build_job_key(job_id))
+async def _get_job(redis_client, job_id: str) -> dict | None:
+    raw = await redis_client.get(_build_job_key(job_id))
     if raw is None:
         return None
     return json.loads(raw)
@@ -55,7 +55,7 @@ async def run_ingestion_job(
     """
     try:
         submitted_at = datetime.now(timezone.utc).isoformat()
-        _set_job(redis_client, job_id, {
+        await _set_job(redis_client, job_id, {
             "job_id": job_id,
             "status": JobStatus.RUNNING,
             "start_date": start_date,
@@ -91,7 +91,7 @@ async def run_ingestion_job(
         docs = await loop.run_in_executor(None, _stream)
         docs_processed = len(docs)
 
-        _set_job(redis_client, job_id, {
+        await _set_job(redis_client, job_id, {
             "job_id": job_id,
             "status": JobStatus.COMPLETED,
             "start_date": start_date,
@@ -108,8 +108,8 @@ async def run_ingestion_job(
 
     except Exception as exc:
         logger.error("Ingestion job %s failed: %s", job_id, exc)
-        existing = _get_job(redis_client, job_id) or {}
-        _set_job(redis_client, job_id, {
+        existing = await _get_job(redis_client, job_id) or {}
+        await _set_job(redis_client, job_id, {
             **existing,
             "job_id": job_id,
             "status": JobStatus.FAILED,
