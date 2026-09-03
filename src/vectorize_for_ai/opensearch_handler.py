@@ -136,3 +136,10 @@ class OpenSearchHandler(DatabaseHandler):
             logger.info("Disconnected from OpenSearch")
         except Exception as e:
             logger.warning("error disconnecting from OpenSearch: %s", e)
+
+    async def aclose(self) -> None:
+        try:
+            await self.vector_store.aclose()
+            logger.info("Disconnected from OpenSearch (async)")
+        except Exception as e:
+            logger.warning("error disconnecting from OpenSearch (async): %s", e)

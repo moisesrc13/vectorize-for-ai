@@ -71,3 +71,11 @@ class DatabaseHandler(ABC):
     def close(self) -> None:
         """Close database connection."""
         pass
+
+    async def aclose(self) -> None:
+        """Asynchronously close database connection.
+
+        Default implementation falls back to the synchronous ``close()``.
+        Override in subclasses that hold async clients.
+        """
+        self.close()

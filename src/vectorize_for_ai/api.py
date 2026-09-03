@@ -49,7 +49,7 @@ async def lifespan(_: FastAPI):
 
     # Shutdown
     if ingestion_pipeline:
-        ingestion_pipeline.close()
+        await ingestion_pipeline.aclose()
     if redis_client:
         redis_client.close()
     logger.info("Shutting down FastAPI application")

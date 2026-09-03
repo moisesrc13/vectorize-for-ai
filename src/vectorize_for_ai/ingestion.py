@@ -358,3 +358,7 @@ class DocumentIngestionPipeline:
     def close(self) -> None:
         self.db_handler.close()
         logger.info("Closed all connections")
+
+    async def aclose(self) -> None:
+        await self.db_handler.aclose()
+        logger.info("Closed all connections (async)")
