@@ -10,14 +10,10 @@ RUN mkdir -p /var/cache/yum/metadata && \
 
 WORKDIR /app
 
-# Install Poetry and project dependencies
-COPY pyproject.toml README.md ./
-RUN pip install --no-cache-dir poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --only main --no-root --no-interaction --no-ansi
-
-# Copy source
+# Copy source and install all dependencies via PEP 517 build
+COPY --chown=appuser:appuser pyproject.toml README.md app.py mcp_app.py ./
 COPY --chown=appuser:appuser src/ ./src/
-COPY --chown=appuser:appuser app.py mcp_app.py ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
 
 USER 1001
