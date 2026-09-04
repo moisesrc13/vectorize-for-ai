@@ -127,7 +127,6 @@ class IngestRequest(BaseModel):
         description="Ingest documents with createdTime >= this date (YYYY-MM-DD)",
         examples=["2024-01-01"],
     )
-    force: bool = Field(default=False, description="force reingestion")
 
 
 class IngestResponse(BaseModel):
@@ -287,7 +286,6 @@ async def ingest_endpoint(
         redis_client=r,
         embedding_handler=emb,
         pipeline=pipeline,
-        force=request.force,
     )
 
     return IngestResponse(
