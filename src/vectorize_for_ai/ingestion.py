@@ -204,21 +204,21 @@ class DocumentIngestionPipeline:
                     reader = DoclingReader(export_type=DoclingReader.ExportType.JSON)
                     documents = reader.load_data(file_path=tmp_path)
                     if documents:
+                        doc_meta = {
+                            "file_name": file_name,
+                            "gdrive_id": metadata.get("id") or None,
+                            "gdrive_url": metadata.get("webViewLink") or None,
+                            "created_time": metadata.get("createdTime") or None,
+                            "modified_time": metadata.get("modifiedTime") or None,
+                            "mime_type": mime_type or None,
+                            "size": metadata.get("size") or None,
+                            "md5_checksum": metadata.get("md5Checksum") or None,
+                            "drive_id": metadata.get("driveId") or None,
+                            "description": metadata.get("description") or None,
+                        }
+                        doc_meta = {k: v for k, v in doc_meta.items() if v is not None}
                         for doc in documents:
-                            doc.metadata.update(
-                                {
-                                    "file_name": file_name,
-                                    "gdrive_id": metadata.get("id", ""),
-                                    "gdrive_url": metadata.get("webViewLink", ""),
-                                    "created_time": metadata.get("createdTime", ""),
-                                    "modified_time": metadata.get("modifiedTime", ""),
-                                    "mime_type": mime_type,
-                                    "size": metadata.get("size", ""),
-                                    "md5_checksum": metadata.get("md5Checksum", ""),
-                                    "drive_id": metadata.get("driveId", ""),
-                                    "description": metadata.get("description", ""),
-                                }
-                            )
+                            doc.metadata.update(doc_meta)
                         nodes = self.node_parser.get_nodes_from_documents(documents)
                 except Exception as parse_err:
                     logger.warning(
@@ -235,21 +235,22 @@ class DocumentIngestionPipeline:
                 text = content.decode("utf-8", errors="replace")
             except Exception:
                 text = repr(content[:500])
+            node_meta = {
+                "file_name": file_name,
+                "gdrive_id": metadata.get("id") or None,
+                "gdrive_url": metadata.get("webViewLink") or None,
+                "created_time": metadata.get("createdTime") or None,
+                "modified_time": metadata.get("modifiedTime") or None,
+                "mime_type": mime_type or None,
+                "size": metadata.get("size") or None,
+                "md5_checksum": metadata.get("md5Checksum") or None,
+                "drive_id": metadata.get("driveId") or None,
+                "description": metadata.get("description") or None,
+            }
             nodes = [
                 TextNode(
                     text=text,
-                    metadata={
-                        "file_name": file_name,
-                        "gdrive_id": metadata.get("id", ""),
-                        "gdrive_url": metadata.get("webViewLink", ""),
-                        "created_time": metadata.get("createdTime", ""),
-                        "modified_time": metadata.get("modifiedTime", ""),
-                        "mime_type": mime_type,
-                        "size": metadata.get("size", ""),
-                        "md5_checksum": metadata.get("md5Checksum", ""),
-                        "drive_id": metadata.get("driveId", ""),
-                        "description": metadata.get("description", ""),
-                    },
+                    metadata={k: v for k, v in node_meta.items() if v is not None},
                 )
             ]
 
