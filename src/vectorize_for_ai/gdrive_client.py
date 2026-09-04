@@ -61,6 +61,17 @@ class GDriveClient:
             if not page_token:
                 break
 
+    @staticmethod
+    def _to_rfc3339(date_str: str) -> str:
+        """Ensure a date string is RFC 3339 so Drive API comparisons work correctly.
+
+        Drive stores timestamps as RFC 3339 datetimes.  Bare date strings like
+        '2026-01-01' are silently unmatched by the API, returning 0 results.
+        """
+        if date_str and "T" not in date_str:
+            return f"{date_str}T00:00:00Z"
+        return date_str
+
     def list_files_incremental(
         self,
         drive_id: Optional[str] = None,
@@ -72,11 +83,13 @@ class GDriveClient:
         Recursively stream files from a drive or folder.
         Only returns files (not folders) matching the date filter.
         """
+        since_date = self._to_rfc3339(since_date) if since_date else since_date
+
         # CASE 0: No drive_id or folder_id — search across all drives the service account can access
         if not drive_id and not folder_id:
             query = "trashed=false"
             if since_date:
-                query += f" and {date_field} > '{since_date}'"
+                query += f" and {date_field} >= '{since_date}'"
             query += f" and mimeType != '{self.folder_mime}'"
 
             logger.info(f"Searching all drives for files {date_field} > {since_date or 'ALL TIME'}")
@@ -103,7 +116,7 @@ class GDriveClient:
         if drive_id and not folder_id:
             query = "trashed=false"
             if since_date:
-                query += f" and {date_field} > '{since_date}'"
+                query += f" and {date_field} >= '{since_date}'"
             # Exclude folders from results
             query += f" and mimeType != '{self.folder_mime}'"
 
@@ -116,7 +129,7 @@ class GDriveClient:
             # Files in this folder matching date filter
             file_query = f"trashed=false and '{current_folder_id}' in parents and mimeType != '{self.folder_mime}'"
             if since_date:
-                file_query += f" and {date_field} > '{since_date}'"
+                file_query += f" and {date_field} >= '{since_date}'"
 
             for file in self._list_files_raw(q=file_query, drive_id=drive_id):
                 file["folder_path"] = path
