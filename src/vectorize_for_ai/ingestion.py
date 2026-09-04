@@ -192,8 +192,13 @@ class DocumentIngestionPipeline:
         if supported:
             converter = self._get_converter_pipeline(ext)
             if converter is not None:
+                write_content = content
+                if ext == "pdf":
+                    cleaned = remove_pdf_decorations(content)
+                    if cleaned is not None:
+                        write_content = cleaned
                 with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-                    tmp.write(content)
+                    tmp.write(write_content)
                     tmp_path = tmp.name
                 try:
                     reader = DoclingReader(export_type=DoclingReader.ExportType.JSON)
