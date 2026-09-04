@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from enum import Enum
 
+from vectorize_for_ai.config import gdrive_settings
 from vectorize_for_ai.embeddings import EmbeddingHandler
 from vectorize_for_ai.gdrive_document_processor import GDriveDocumentProcessor
 from vectorize_for_ai.ingestion import DocumentIngestionPipeline
@@ -79,11 +80,17 @@ async def run_ingestion_job(
         # pool so it doesn't block the async event loop.
         loop = asyncio.get_event_loop()
 
+        folder_id = gdrive_settings.drive_folder_id or None
+        drive_id = gdrive_settings.drive_shared_id or None
+
         def _stream() -> list[dict]:
             results = []
             for doc_meta in processor.stream_new_documents(
+                drive_id=drive_id,
+                folder_id=folder_id,
                 since_date=start_date,
                 handler=_handler,
+                force=True,  # explicit re-ingest: bypass processed-IDs dedup
             ):
                 results.append(doc_meta)
             return results

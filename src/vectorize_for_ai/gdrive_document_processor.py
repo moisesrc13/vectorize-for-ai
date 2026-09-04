@@ -113,9 +113,15 @@ class GDriveDocumentProcessor:
         date_field: str = "createdTime",
         handler: Optional[Callable[[bytes, Dict], None]] = None,
         download: bool = False,
+        force: bool = False,
     ):
         """
         Generator that recursively yields one new document at a time.
+
+        Args:
+            force: When True, skip the processed-IDs dedup check so previously
+                   ingested files are re-processed.  Use for explicit re-ingest
+                   requests.
         """
         since = self.state.get_since_date(since_date)
         logger.info(f"Streaming documents {date_field} > {since or 'BEGINNING'}")
@@ -128,7 +134,7 @@ class GDriveDocumentProcessor:
         ):
             file_id = file_meta["id"]
 
-            if self.state.is_processed(file_id):
+            if not force and self.state.is_processed(file_id):
                 continue
 
             result = self.process_one(
