@@ -47,6 +47,7 @@ async def run_ingestion_job(
     redis_client,
     embedding_handler: EmbeddingHandler,
     pipeline: DocumentIngestionPipeline,
+    force: bool = False
 ) -> None:
     """
     Background coroutine.  Streams Google Drive documents whose createdTime >=

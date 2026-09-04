@@ -66,7 +66,8 @@ class GDriveClient:
         drive_id: Optional[str] = None,
         folder_id: Optional[str] = None,
         since_date: Optional[str] = None,
-        date_field: str = "createdTime"
+        date_field: str = "createdTime",
+        force: bool = False
     ) -> Iterator[Dict]:
         """
         Recursively stream files from a drive or folder.
@@ -75,7 +76,7 @@ class GDriveClient:
         # CASE 0: No drive_id or folder_id — search across all drives the service account can access
         if not drive_id and not folder_id:
             query = "trashed=false"
-            if since_date:
+            if since_date and not force:
                 query += f" and {date_field} > '{since_date}'"
             query += f" and mimeType != '{self.folder_mime}'"
 

@@ -103,6 +103,7 @@ class Settings(BaseSettings):
 
 
 
+
 class GDriveSettings(BaseSettings):
     drive_credentials_path: str = Field(default="credentials.json", description="drive credentials")
     drive_shared_id: str = Field(default="", description="shared drive id")

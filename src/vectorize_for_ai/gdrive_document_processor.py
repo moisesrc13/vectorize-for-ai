@@ -112,7 +112,8 @@ class GDriveDocumentProcessor:
         since_date: Optional[str] = None,
         date_field: str = "createdTime",
         handler: Optional[Callable[[bytes, Dict], None]] = None,
-        download: bool = False
+        download: bool = False,
+        force: bool = False
     ):
         """
         Generator that recursively yields one new document at a time.
