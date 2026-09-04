@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 
 from vectorize_for_ai.config import settings
 from vectorize_for_ai.logger import get_logger
+from vectorize_for_ai.search_handler import SearchResponse
 
 logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
@@ -23,9 +24,7 @@ mcp = FastMCP("vectorize-search")
 
 @mcp.tool()
 async def search(
-    query: str,
-    #limit: int = 10,
-    #similarity_top_k: int = 10,
+    query: str
 ) -> str:
     """Search for documents in the vector store.
 
@@ -64,14 +63,20 @@ async def search(
         )
 
     data = resp.json()
-    results = data.get("results", [])
+    response_data = SearchResponse(**data)
 
-    if not results:
-        return f'No results found for query: "{query}"'
+    if not response_data.results:
+        return f'no results found for query: "{query}"'
 
     passages = []
-    for i, result in enumerate(results, start=1):
-        passages.append(f"[{i}] {result['text'].strip()}")
+    for i, result in enumerate(response_data.results, start=1):
+        source_url = result.metadata.get("gdrive_url") or result.metadata.get("file_name", "")
+        chunk_str = (
+            f"[Source {i}]\n"
+            f"URL: {source_url}\n"
+            f"Content:\n{result.text}"
+        )
+        passages.append(chunk_str)
 
     return f'Search results for "{query}":\n\n' + "\n\n".join(passages)
 

@@ -81,9 +81,9 @@ class SearchResult(BaseModel):
 class SearchResponse(BaseModel):
     """Search response model."""
 
-    query: str = Field(..., description="Original search query")
-    results: list[SearchResult] = Field(..., description="Search results")
-    total: int = Field(..., description="Total number of results returned")
+    query: str = Field(default="", description="Original search query")
+    results: list[SearchResult] = Field(default=[], description="Search results")
+    total: int = Field(default=0, description="Total number of results returned")
 
 
 def _build_metadata_filters(
