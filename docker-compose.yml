@@ -7,7 +7,7 @@ services:
       - .env.shared
     environment:
       - discovery.type=single-node
-      - DISABLE_SECURITY_PLUGIN=true
+      - plugins.security.disabled=true
     ports:
       - "9200:9200"
       - "9600:9600"
@@ -62,4 +62,6 @@ services:
 
 volumes:
   opensearch-data:
+    external: true
   open-webui-dev:
+    external: true
