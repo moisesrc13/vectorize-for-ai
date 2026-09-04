@@ -204,8 +204,14 @@ class DocumentIngestionPipeline:
                                 {
                                     "file_name": file_name,
                                     "gdrive_id": metadata.get("id", ""),
+                                    "gdrive_url": metadata.get("webViewLink", ""),
                                     "created_time": metadata.get("createdTime", ""),
+                                    "modified_time": metadata.get("modifiedTime", ""),
                                     "mime_type": mime_type,
+                                    "size": metadata.get("size", ""),
+                                    "md5_checksum": metadata.get("md5Checksum", ""),
+                                    "drive_id": metadata.get("driveId", ""),
+                                    "description": metadata.get("description", ""),
                                 }
                             )
                         nodes = self.node_parser.get_nodes_from_documents(documents)
@@ -230,8 +236,14 @@ class DocumentIngestionPipeline:
                     metadata={
                         "file_name": file_name,
                         "gdrive_id": metadata.get("id", ""),
+                        "gdrive_url": metadata.get("webViewLink", ""),
                         "created_time": metadata.get("createdTime", ""),
+                        "modified_time": metadata.get("modifiedTime", ""),
                         "mime_type": mime_type,
+                        "size": metadata.get("size", ""),
+                        "md5_checksum": metadata.get("md5Checksum", ""),
+                        "drive_id": metadata.get("driveId", ""),
+                        "description": metadata.get("description", ""),
                     },
                 )
             ]
