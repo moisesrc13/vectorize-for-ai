@@ -1,0 +1,37 @@
+FROM registry.access.redhat.com/ubi10/python-312-minimal:latest
+
+USER root
+
+# Set environment variables for Python and cache directories
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/home/appuser/.cache/huggingface \
+    TORCH_HOME=/home/appuser/.cache/torch
+
+# Create cache dir, install required system & build dependencies for aarch64 / ARM64, and create non-root user
+RUN mkdir -p /var/cache/yum/metadata && \
+    microdnf install -y shadow-utils libxcb mesa-libGL ghostscript openssl openssl-devel gcc-c++ make tar && \
+    microdnf clean all && \
+    useradd -m -u 1001 appuser && \
+    mkdir -p /home/appuser/.cache/huggingface /home/appuser/.cache/torch /app/downloads && \
+    chown -R appuser:appuser /home/appuser /app
+
+WORKDIR /app
+
+# Copy project definition and source code with proper non-root ownership
+COPY --chown=appuser:appuser pyproject.toml README.md app.py mcp_app.py ./
+COPY --chown=appuser:appuser src/ ./src/
+
+# Upgrade pip and install application dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
+
+# Expose API and MCP ports
+EXPOSE 8010 8443
+
+# Switch to non-root user
+USER 1001
+
+# Default command to run the API server
+CMD ["python", "app.py"]

@@ -40,3 +40,23 @@ podman run -d -p 3000:8080 \
 
 
 connecting from OpenWEB ui, point to `http://host.docker.internal:8443/mcp`
+
+## On ARM Cpu
+
+podman build --platform linux/arm64 -t vectorize-for-ai:rpi -f Dockerfile_rpi .
+# or with docker buildx:
+docker buildx build --platform linux/arm64 -t vectorize-for-ai:rpi -f Dockerfile_rpi --load .
+
+# To run the API service
+podman run -d \
+  --name vectorize-api \
+  -p 8010:8010 \
+  --env-file .env \
+  vectorize-for-ai:rpi
+
+# Or to run the MCP server
+podman run -d \
+  --name vectorize-mcp \
+  -p 8443:8443 \
+  --env-file .env \
+  vectorize-for-ai:rpi python mcp_app.py
