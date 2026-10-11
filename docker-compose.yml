@@ -21,8 +21,7 @@ services:
     restart: unless-stopped
 
   api:
-    build: .
-    command: python app.py
+    image: vectorize-for-ai:latest
     env_file:
       - .env.shared
     environment:
@@ -35,7 +34,7 @@ services:
     restart: unless-stopped
 
   mcp:
-    build: .
+    image: vectorize-for-ai:latest
     command: python mcp_app.py
     env_file:
       - .env.shared
