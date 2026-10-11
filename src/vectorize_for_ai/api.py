@@ -1,6 +1,7 @@
 import uuid
 from contextlib import asynccontextmanager
 from datetime import date
+from pathlib import Path
 from typing import Annotated
 
 import fakeredis
@@ -10,7 +11,12 @@ from pydantic import BaseModel, Field
 
 from vectorize_for_ai.config import settings
 from vectorize_for_ai.embeddings import EmbeddingHandler
-from vectorize_for_ai.gdrive_ingest_worker import JobStatus, _get_job, run_ingestion_job
+from vectorize_for_ai.gdrive_ingest_worker import (
+    JobStatus,
+    _get_job,
+    run_ingestion_job,
+    run_local_ingestion_job,
+)
 from vectorize_for_ai.ingestion import DocumentIngestionPipeline
 from vectorize_for_ai.logger import get_logger
 from vectorize_for_ai.search_handler import SearchRequest, SearchResponse, search
@@ -129,6 +135,21 @@ class IngestRequest(BaseModel):
     )
 
 
+class IngestLocalRequest(BaseModel):
+    """Request body for the local directory ingestion trigger endpoint."""
+
+    directory_path: str = Field(
+        ...,
+        description="Local directory path containing documents to ingest",
+        examples=["/app/documents", "./data"],
+    )
+    start_date: date = Field(
+        ...,
+        description="Ingest documents with modified time >= this date (YYYY-MM-DD)",
+        examples=["2024-01-01"],
+    )
+
+
 class IngestResponse(BaseModel):
     """Response returned immediately after ingestion job is submitted."""
 
@@ -144,6 +165,7 @@ class JobStatusResponse(BaseModel):
     job_id: str
     status: JobStatus
     start_date: str | None = None
+    directory_path: str | None = None
     submitted_at: str | None = None
     completed_at: str | None = None
     documents_processed: int = 0
@@ -293,6 +315,69 @@ async def ingest_endpoint(
         status=JobStatus.PENDING,
         start_date=start_date_str,
         message=f"Ingestion job submitted. Poll /ingest/job?job_id={job_id} for status.",
+    )
+
+
+@app.post(
+    "/ingest/local",
+    response_model=IngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Ingest documents from a local directory updated on or after a given date",
+)
+async def ingest_local_endpoint(
+    request: IngestLocalRequest,
+    background_tasks: BackgroundTasks,
+    _: Annotated[None, Depends(authenticate)],
+    r: Annotated[fakeredis.FakeRedis, Depends(_get_redis)],
+    emb: Annotated[EmbeddingHandler, Depends(_get_embedding_handler)],
+    pipeline: Annotated[DocumentIngestionPipeline, Depends(_get_ingestion_pipeline)],
+) -> IngestResponse:
+    """
+    Submit a background ingestion job for local documents.
+
+    Scans the specified local directory for all files whose last modification
+    time is >= *start_date*, generates dense and sparse embeddings for each chunk,
+    and indexes them into the vector store.
+
+    Returns a job UUID immediately. Poll ``GET /ingest/job?job_id=<uuid>`` for status.
+    """
+    dir_path = Path(request.directory_path).expanduser().resolve()
+    if not dir_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Directory '{request.directory_path}' does not exist.",
+        )
+    if not dir_path.is_dir():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Path '{request.directory_path}' is not a directory.",
+        )
+
+    job_id = str(uuid.uuid4())
+    start_date_str = request.start_date.isoformat()
+
+    await logger.ainfo(
+        "Submitting local ingestion job %s for directory '%s' >= %s",
+        job_id,
+        str(dir_path),
+        start_date_str,
+    )
+
+    background_tasks.add_task(
+        run_local_ingestion_job,
+        job_id=job_id,
+        directory_path=str(dir_path),
+        start_date=start_date_str,
+        redis_client=r,
+        embedding_handler=emb,
+        pipeline=pipeline,
+    )
+
+    return IngestResponse(
+        job_id=job_id,
+        status=JobStatus.PENDING,
+        start_date=start_date_str,
+        message=f"Local ingestion job submitted for directory '{request.directory_path}'. Poll /ingest/job?job_id={job_id} for status.",
     )
 
 
