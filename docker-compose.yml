@@ -65,6 +65,4 @@ services:
 
 volumes:
   opensearch-data:
-    external: true
   open-webui-dev:
-    external: true
