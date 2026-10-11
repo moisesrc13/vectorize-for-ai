@@ -32,6 +32,10 @@ services:
     depends_on:
       - opensearch
     restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ~/documents
+        target: /tmp/documents
 
   mcp:
     image: vectorize-for-ai:latest
