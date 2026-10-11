@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: vectorize-for-ai:latest
+    image: vectorize-for-ai:rpi
     env_file:
       - .env.shared
     environment:
@@ -38,7 +38,7 @@ services:
         target: /tmp/documents
 
   mcp:
-    image: vectorize-for-ai:latest
+    image: vectorize-for-ai:rpi
     command: python mcp_app.py
     env_file:
       - .env.shared
