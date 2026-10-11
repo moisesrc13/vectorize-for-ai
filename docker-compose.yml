@@ -30,7 +30,8 @@ services:
     ports:
       - "8010:8010"
     depends_on:
-      - opensearch
+      opensearch:
+        condition: service_healthy
     restart: unless-stopped
     volumes:
       - type: bind

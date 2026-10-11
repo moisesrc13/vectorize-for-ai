@@ -5,6 +5,7 @@ from llama_index.core.schema import BaseNode
 from llama_index.core.vector_stores import VectorStoreQuery, VectorStoreQueryResult
 from llama_index.vector_stores.opensearch import OpensearchVectorClient, OpensearchVectorStore
 from opensearchpy import OpenSearch
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from vectorize_for_ai.config import settings
 from vectorize_for_ai.database_handler import DatabaseHandler
@@ -33,13 +34,17 @@ class OpenSearchHandler(DatabaseHandler):
                 idx_conf=settings.opensearch_index_config,
             )
         else:
+            http_auth = None
+            if settings.opensearch_user:
+                http_auth = (settings.opensearch_user, settings.opensearch_initial_admin_password)
+
             self.client = OpensearchVectorClient(
                 endpoint=settings.opensearch_uri,
                 index=self.index_name,
                 dim=self.embedding_dim,
                 embedding_field=settings.opensearch_embedding_field,
                 text_field=settings.opensearch_text_field,
-                http_auth=(settings.opensearch_user, settings.opensearch_initial_admin_password),
+                http_auth=http_auth,
                 use_ssl=settings.opensearch_use_ssl,
                 verify_certs=settings.opensearch_verify_certs,
                 idx_conf=settings.opensearch_index_config,
@@ -48,14 +53,31 @@ class OpenSearchHandler(DatabaseHandler):
         self.vector_store = OpensearchVectorStore(self.client)
 
         # LlamaIndex defers index creation until first use; trigger it eagerly
-        # at startup so the index exists before any ingestion or query occurs.
-        self.client._ensure_initialized()
+        # with retry at startup to allow OpenSearch time to finish initialization.
+        self._ensure_initialized_with_retry()
 
         logger.info(
             "Initialized OpensearchVectorStore for index %s at %s",
             self.index_name,
             settings.opensearch_uri,
         )
+
+    @retry(
+        stop=stop_after_attempt(12),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _ensure_initialized_with_retry(self) -> None:
+        """Trigger index creation eagerly, retrying while OpenSearch boots up."""
+        try:
+            self.client._ensure_initialized()
+        except Exception as e:
+            logger.warning(
+                "Waiting for OpenSearch at %s to become ready (error: %s)...",
+                settings.opensearch_uri,
+                e,
+            )
+            raise
 
     def get_vector_store(self) -> OpensearchVectorStore:
         return self.vector_store
