@@ -1,31 +1,62 @@
-FROM registry.access.redhat.com/ubi10/python-312-minimal:latest
+# ==============================================================================
+# Stage 1: Build stage - Install dependencies into a virtual environment
+# ==============================================================================
+FROM registry.access.redhat.com/ubi10/python-312-minimal:latest AS builder
 
 USER root
 
-# Set environment variables for Python and cache directories
+# Install system build dependencies required for compiling native C/C++ extensions on ARM64
+RUN mkdir -p /var/cache/yum/metadata && \
+    microdnf install -y shadow-utils libxcb mesa-libGL ghostscript openssl openssl-devel gcc-c++ make tar && \
+    microdnf clean all
+
+# Create virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+# Copy only project manifest and create package stub to pre-install dependencies
+COPY pyproject.toml README.md ./
+RUN mkdir -p src/vectorize_for_ai && \
+    touch src/vectorize_for_ai/__init__.py && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
+
+# ==============================================================================
+# Stage 2: Runtime stage - Minimal execution image
+# ==============================================================================
+FROM registry.access.redhat.com/ubi10/python-312-minimal:latest AS runtime
+
+USER root
+
+# Set runtime environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
+    PATH="/opt/venv/bin:$PATH" \
     HF_HOME=/home/appuser/.cache/huggingface \
     TORCH_HOME=/home/appuser/.cache/torch
 
-# Create cache dir, install required system & build dependencies for aarch64 / ARM64, and create non-root user
+# Install runtime-only system dependencies and create non-root user
 RUN mkdir -p /var/cache/yum/metadata && \
-    microdnf install -y shadow-utils libxcb mesa-libGL ghostscript openssl openssl-devel gcc-c++ make tar && \
+    microdnf install -y shadow-utils libxcb mesa-libGL ghostscript openssl && \
     microdnf clean all && \
     useradd -m -u 1001 appuser && \
     mkdir -p /home/appuser/.cache/huggingface /home/appuser/.cache/torch /app/downloads && \
     chown -R appuser:appuser /home/appuser /app
 
+# Copy pre-installed virtual environment from builder stage
+COPY --from=builder --chown=appuser:appuser /opt/venv /opt/venv
+
 WORKDIR /app
 
-# Copy project definition and source code with proper non-root ownership
+# Copy application source code (layers below invalidate only when app code changes)
 COPY --chown=appuser:appuser pyproject.toml README.md app.py mcp_app.py ./
 COPY --chown=appuser:appuser src/ ./src/
 
-# Upgrade pip and install application dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
+# Install the application package without re-downloading dependencies
+RUN pip install --no-cache-dir --no-deps .
 
 # Expose API and MCP ports
 EXPOSE 8010 8443
