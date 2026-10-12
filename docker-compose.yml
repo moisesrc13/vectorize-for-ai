@@ -56,10 +56,14 @@ services:
     image: ghcr.io/open-webui/open-webui:dev
     ports:
       - "3000:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - open-webui-dev:/app/backend/data
     env_file:
       - .env.shared
+    environment:
+      - OLLAMA_BASE_URLS=http://host.docker.internal:11434
     depends_on:
       - mcp
     restart: unless-stopped
