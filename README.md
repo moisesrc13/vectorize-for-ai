@@ -60,3 +60,23 @@ podman run -d \
   -p 8443:8443 \
   --env-file .env \
   vectorize-for-ai:rpi python mcp_app.py
+
+## Ollama setup
+Open the systemd override file for Ollama:
+
+sudo systemctl edit ollama
+
+Add these lines between the comments:
+
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+
+Reload systemd and restart the Ollama service:
+
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+
+Verify it is now bound to all interfaces:
+
+ss -tulpn | grep 11434
+# You should see: 0.0.0.0:11434 or *:11434 instead of 127.0.0.1:11434
